@@ -1,0 +1,36 @@
+# Environments
+env_aura/
+venv/
+.venv/
+env/
+ENV/
+
+# Python cache & build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Secret & Local Config
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# IDE & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Node / Frontend
+node_modules/
+dist-ssr/
+*.local
