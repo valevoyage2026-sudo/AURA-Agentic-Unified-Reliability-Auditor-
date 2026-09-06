@@ -1,0 +1,20 @@
+[
+  {
+    "id": "sample_001",
+    "mode": "audit_only",
+    "text": "The Eiffel Tower was completed in 1889 in Paris, France. It stands 330 meters tall.",
+    "expected_claim_types": ["factual-atomic", "factual-atomic"]
+  },
+  {
+    "id": "sample_002",
+    "mode": "audit_only",
+    "text": "According to Smith et al. (2021), Quantum computing will solve climate change by 2030.",
+    "expected_claim_types": ["citation", "unverifiable"]
+  },
+  {
+    "id": "sample_003",
+    "mode": "audit_only",
+    "text": "AURA is the best fact-checking tool ever created.",
+    "expected_claim_types": ["subjective"]
+  }
+]
