@@ -18,7 +18,7 @@ The system is organized into five layers. Each layer is documented below with it
 
 ### 1. System layer view
 
-![System Layer Architecture](doc/daigrams/Layer_Diagram%20.svg)
+![System Layer Architecture](doc/daigrams/Layer_Daigram.svg)
 
 - **Presentation Layer** — User Interface → API Gateway / Endpoints. This is the only layer a client talks to.
 - **Orchestration Layer** — LangGraph Orchestrator → Task Planner / Decomposer. Owns state, sequencing, and the re-plan loop back from the Agent Layer.
