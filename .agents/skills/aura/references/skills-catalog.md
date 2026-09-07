@@ -1,9 +1,6 @@
-# SKILLS.md — AURA Reusable Skills & Tool Catalog
+# AURA Skills Catalog & Specifications
 
-> [!NOTE]
-> This catalog is also exposed as a project-local Antigravity skill at [.agents/skills/aura/SKILL.md](file:///.agents/skills/aura/SKILL.md) with canonical reference at [.agents/skills/aura/references/skills-catalog.md](file:///.agents/skills/aura/references/skills-catalog.md).
-
-Skills are the discrete, reusable capabilities agents call into. Keeping them as separate, independently-testable units (rather than baking logic into each agent's prompt) is what lets Fact/Citation/Contradiction agents share infrastructure instead of duplicating retrieval or scoring logic.
+Skills are discrete, reusable capabilities agents call into. Keeping them as separate, independently-testable units (rather than baking logic into each agent's prompt) lets Fact/Citation/Contradiction agents share infrastructure instead of duplicating retrieval or scoring logic.
 
 Each skill below lists: what it does, its call signature, what it must guarantee, and what it explicitly does *not* do (to keep skill boundaries clean).
 
