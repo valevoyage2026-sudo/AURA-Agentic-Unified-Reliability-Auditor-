@@ -12,35 +12,103 @@ Week 1 (foundation layer) — in progress. See [`AURA_Week1_Foundation_Plan.docx
 
 ---
 
-## How it works (short version)
+## Architecture
+
+The system is organized into five layers. Each layer is documented below with its corresponding diagram. Diagram source files live in `doc/daigrams/` — copy the SVGs from this delivery into that folder (see [Repo layout for diagrams](#repo-layout-for-diagrams) at the end of this section) so the links below resolve on GitHub.
+
+### 1. System layer view
+
+![System Layer Architecture](doc/daigrams/Layer_Diagram%20.svg)
+
+- **Presentation Layer** — User Interface → API Gateway / Endpoints. This is the only layer a client talks to.
+- **Orchestration Layer** — LangGraph Orchestrator → Task Planner / Decomposer. Owns state, sequencing, and the re-plan loop back from the Agent Layer.
+- **Agent Layer** — Fact Verification Agent, Citation Verification Agent, Logic / Contradiction Agent, and Reliability Evaluator run here. The Evaluator routes to either the Self-Repair Agent or the Response Generator. The Self-Repair Agent's output does not go straight to the user — it feeds back into the LangGraph Orchestrator, which re-runs planning and retrieval before the Agent Layer is invoked again.
+- **Knowledge Layer** — RAG / Retrieval Engine backed by Qdrant (vector search) and Neo4j (knowledge graph). Called by the Fact and Citation agents, and again on every re-plan cycle.
+- **Data Layer** — Memory / Audit Logs, persisted to PostgreSQL. Written to by both the Reliability Evaluator and the Response Generator.
+
+### 2. End-to-end processing architecture
+
+![AI Query Processing Architecture](doc/daigrams/Arc_Diagram.svg)
+
+This is the same system redrawn as a straight-line data-flow, layer by layer:
+
+`Input Layer → Orchestration Layer → Knowledge Layer → Verification Layer → Assessment Layer → Response Layer`
+
+- **Input Layer** — accepts the raw user query or the LLM response under audit.
+- **Orchestration Layer** — Orchestrator (LangGraph) hands off to Planner / Task Decomposition, which breaks the input into individually checkable claims.
+- **Knowledge Layer** — RAG / Retrieval Engine queries the vector DB (Qdrant) and knowledge graph (Neo4j) in parallel for each claim.
+- **Verification Layer** — Fact Verification Agent and Citation Verification Agent run against the retrieved evidence; both feed the Contradiction / Logic Agent, which checks claims against each other, not just against evidence.
+- **Assessment Layer** — Reliability / Evaluator Agent aggregates the three verification outputs into a single score and writes the record to Memory / Audit Storage (PostgreSQL) regardless of outcome.
+- **Response Layer** — Response Generator produces the final output on a pass; Response Refinement / Self-Repair Agent handles a fail. The diagram's feedback line runs from this layer back to the Orchestrator — a failed check triggers a new orchestration pass, not a local retry.
+
+### 3. Multi-agent workflow
+
+![Multi-Agent Workflow](doc/daigrams/Agent_Workflow.svg)
+
+Names the concrete agents and their call graph:
+
+1. **User Query** → **Orchestrator (LangGraph)**
+2. Orchestrator → **Task Planner / Decomposer**
+3. Planner → **RAG Retrieval**, which fans out to **Qdrant** and **Neo4j**
+4. Retrieved evidence goes to the **Verification Agents** group: **Fact Verification Agent**, **Citation Verification Agent**, **Logic / Contradiction Agent**. The Logic/Contradiction Agent consumes the other two agents' outputs, not just raw evidence.
+5. All three converge on the **Reliability / Evaluator Agent**, which branches:
+   - **Reliable** → **Response Generator** → **Final Response**
+   - **Unreliable** → **Self-Repair / Refinement Agent** → **Response Generator**
+6. The diagram shows an explicit **"Re-plan"** edge from the Response Generator back to the Orchestrator — this is the loop used when a repair still doesn't clear the reliability bar, bounded by `MAX_ITERATIONS` (see [Configuration reference](#configuration-reference)).
+
+### 4. Use-case view (user-facing)
+
+![System Use-Case Workflow](doc/daigrams/UseCase_Workflow%20.svg)
+
+The same pipeline from the caller's perspective, grouped as an "AI Query Processing System" boundary:
+
+- **Submit Query** → **Retrieve Knowledge** → **Verify Information** (Verify Facts, Verify Citations, Check Logic / Contradictions) → **Evaluate Reliability**
+- **Reliable** → **Generate Response**
+- **Unreliable** → **Self-Repair / Refine Response**, which **re-retrieves** (loops back into Retrieve Knowledge) rather than re-verifying stale evidence
+- Either path ends at **View Final Response**, followed by **View Confidence / Evaluation** — the caller always gets the reliability score alongside the answer, not just the answer.
+
+### 5. Detailed activity flow (with the bounded self-repair loop)
+
+![System Use-Case Workflow — detailed activity diagram](doc/daigrams/System_Worlfow.svg)
+
+The full step-by-step trace, including the one-retry bound enforced by `MAX_ITERATIONS`:
 
 ```
-User Query / LLM Response
-        │
-        ▼
-   Orchestrator (LangGraph) ──► Planner (claim decomposition)
-        │                              │
-        │                              ▼
-        │                     RAG + Knowledge Graph retrieval
-        │                              │
-        │            ┌─────────────────┼─────────────────┐
-        │            ▼                 ▼                 ▼
-        │      Fact Agent      Citation Agent     Contradiction Agent
-        │            └─────────────────┼─────────────────┘
-        │                              ▼
-        │                   Reliability / Evaluator Agent
-        │              ┌───────────────┴───────────────┐
-        │           Reliable                       Unreliable / Unresolved
-        │              │                                │
-        │              ▼                                ▼
-        │      Response Generator ◄──────── Self-Repair Agent
-        └──────────────┴──── bounded re-check loop ──────┘
-                              │
-                              ▼
-                    Final Output + Audit Trace
+User submits query
+  → API receives request
+  → LangGraph Orchestrator
+  → Task decomposition
+  → RAG retrieval → [Search Qdrant | Query Neo4j] (parallel)
+  → Build evidence context
+  → [Fact verification | Citation verification | Logic/contradiction check] (parallel)
+  → Reliability evaluation
+  → Reliable?
+      Yes → Generate response → Store result/audit → Return final response
+      No  → Trigger self-repair → Re-plan task → Retrieve additional evidence
+              → Run verification again → Reliability evaluation
+              → Reliable?
+                  Yes → Generate response → Store result/audit → Return final response
+                  No  → Return low-confidence response
 ```
 
-Full component-level detail, decision rules (loop termination, evaluator conflict resolution, retrieval trust-tiering, citation-check methodology), and known limitations live in [`AURA_ARCHITECTURE_README.md`](./AURA_ARCHITECTURE_README.md) — read that before touching orchestration or evaluator logic.
+Two points this diagram makes explicit that the higher-level views don't:
+
+- The retry path re-runs retrieval (`Retrieve additional evidence`), not just re-verification against the same evidence — a failed check is treated as a possible evidence-coverage gap, not only a model error.
+- There is exactly one retry cycle in this flow. If the second reliability evaluation still fails, the system returns a **low-confidence response** rather than looping again — this is the diagram-level expression of the `MAX_ITERATIONS = 2` cap.
+
+<a id="repo-layout-for-diagrams"></a>
+**Repo layout for diagrams:** place the five SVGs at:
+
+```
+doc/daigrams/
+├── Layer_Diagram .svg
+├── Arc_Diagram.svg
+├── Agent_Workflow.svg
+├── UseCase_Workflow .svg
+└── System_Worlfow.svg
+```
+
+All five diagrams above are referenced as `.svg`. If you keep the images elsewhere, or export any of them as `.png` instead, update that file's path/extension in this README to match.
 
 ---
 
@@ -71,6 +139,8 @@ prompts/                 # Versioned prompt templates (referenced by filename in
 data/                    # Sample documents / sample responses for local dev
 tests/                   # Unit, contract, and golden-set regression tests
 benchmarks/              # Latency / cost baseline scripts
+doc/
+└── daigrams/            # Architecture and workflow diagrams referenced in this README
 ```
 
 ---
@@ -172,4 +242,4 @@ Full rationale for each default is in `AURA_ARCHITECTURE_README.md §3.6` and `�
 
 ## Known limitations
 
-Verification is bounded by retrieval corpus coverage, citation-entailment checks carry their own error rate, and per-request cost scales with claim count. Full discussion in `AURA_ARCHITECTURE_README.md §7`.
+Verification is bounded by retrieval corpus coverage, citation-entailment checks carry their own error rate, and per-request cost scales with claim count. The self-repair loop is capped at `MAX_ITERATIONS`; a claim that still fails verification after the retry is returned as a low-confidence response, not silently upgraded. Full discussion in `AURA_ARCHITECTURE_README.md §7`.
