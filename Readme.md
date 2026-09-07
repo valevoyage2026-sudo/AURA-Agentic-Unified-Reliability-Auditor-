@@ -14,11 +14,11 @@ Week 1 (foundation layer) — in progress. See [`AURA_Week1_Foundation_Plan.docx
 
 ## Architecture
 
-The system is organized into five layers. Each layer is documented below with its corresponding diagram. Diagram source files live in `doc/daigrams/` — copy the SVGs from this delivery into that folder (see [Repo layout for diagrams](#repo-layout-for-diagrams) at the end of this section) so the links below resolve on GitHub.
+The system is organized into five layers. Each layer is documented below with its corresponding diagram. Diagram source files live in `doc/diagrams/` — copy the SVGs from this delivery into that folder (see [Repo layout for diagrams](#repo-layout-for-diagrams) at the end of this section) so the links below resolve on GitHub.
 
 ### 1. System layer view
 
-![System Layer Architecture](doc/daigrams/Layer_Daigram.svg)
+![System Layer Architecture](doc/diagrams/Layer_Diagram.svg)
 
 - **Presentation Layer** — User Interface → API Gateway / Endpoints. This is the only layer a client talks to.
 - **Orchestration Layer** — LangGraph Orchestrator → Task Planner / Decomposer. Owns state, sequencing, and the re-plan loop back from the Agent Layer.
@@ -28,7 +28,7 @@ The system is organized into five layers. Each layer is documented below with it
 
 ### 2. End-to-end processing architecture
 
-![AI Query Processing Architecture](doc/daigrams/Agent_Workflow.svg)
+![AI Query Processing Architecture](doc/diagrams/Agent_Workflow.svg)
 
 This is the same system redrawn as a straight-line data-flow, layer by layer:
 
@@ -43,7 +43,7 @@ This is the same system redrawn as a straight-line data-flow, layer by layer:
 
 ### 3. Multi-agent workflow
 
-![Multi-Agent Workflow](doc/daigrams/Agent_Workflow.svg)
+![Multi-Agent Workflow](doc/diagrams/Agent_Workflow.svg)
 
 Names the concrete agents and their call graph:
 
@@ -58,7 +58,7 @@ Names the concrete agents and their call graph:
 
 ### 4. Use-case view (user-facing)
 
-![System Use-Case Workflow](doc/daigrams/UseCase_Workflow%20.svg)
+![System Use-Case Workflow](doc/diagrams/UseCase_Workflow.svg)
 
 The same pipeline from the caller's perspective, grouped as an "AI Query Processing System" boundary:
 
@@ -69,7 +69,7 @@ The same pipeline from the caller's perspective, grouped as an "AI Query Process
 
 ### 5. Detailed activity flow (with the bounded self-repair loop)
 
-![System Use-Case Workflow — detailed activity diagram](doc/daigrams/System_Worlfow.svg)
+![System Use-Case Workflow — detailed activity diagram](doc/diagrams/System_Workflow.svg)
 
 The full step-by-step trace, including the one-retry bound enforced by `MAX_ITERATIONS`:
 
@@ -97,15 +97,16 @@ Two points this diagram makes explicit that the higher-level views don't:
 - There is exactly one retry cycle in this flow. If the second reliability evaluation still fails, the system returns a **low-confidence response** rather than looping again — this is the diagram-level expression of the `MAX_ITERATIONS = 2` cap.
 
 <a id="repo-layout-for-diagrams"></a>
-**Repo layout for diagrams:** place the five SVGs at:
+**Repo layout for diagrams:** place the six SVGs at:
 
 ```
-doc/daigrams/
-├── Layer_Diagram .svg
+doc/diagrams/
+├── Layer_Diagram.svg
 ├── Arc_Diagram.svg
 ├── Agent_Workflow.svg
-├── UseCase_Workflow .svg
-└── System_Worlfow.svg
+├── UseCase_Workflow.svg
+├── System_Workflow.svg
+└── Architecture_Diagram.svg
 ```
 
 All five diagrams above are referenced as `.svg`. If you keep the images elsewhere, or export any of them as `.png` instead, update that file's path/extension in this README to match.
@@ -116,7 +117,8 @@ All five diagrams above are referenced as `.svg`. If you keep the images elsewhe
 
 | Doc | What's in it | Read it when |
 |---|---|---|
-| [`AURA_ARCHITECTURE_README.md`](./AURA_ARCHITECTURE_README.md) | Full system design: components, data flow, cost/latency budget, tech stack, limitations | You're designing or reviewing a new component |
+| [`Architecture.md`](./Architecture.md) / [`AURA_ARCHITECTURE_README.md`](./AURA_ARCHITECTURE_README.md) | Full system design: components, data flow, cost/latency budget, state schema | You're designing or reviewing a new component |
+| [`SECURITY_RULES.md`](./SECURITY_RULES.md) | Security rules: secret hygiene, PII sanitization, SQL parameterization, eval/exec ban | Writing or reviewing secure code and API integrations |
 | [`AGENTS.md`](./AGENTS.md) | Per-agent contract: inputs/outputs, guardrails, failure modes | You're implementing or testing an agent |
 | [`SKILLS.md`](./SKILLS.md) | Reusable deterministic/tool functions agents call into | You're deciding whether logic belongs in a skill vs. an agent prompt |
 | [`CODING_STANDARDS.md`](./CODING_STANDARDS.md) | Schema rules, LLM-output parsing pattern, determinism requirements, testing checklist | Before opening a PR |
@@ -140,7 +142,7 @@ data/                    # Sample documents / sample responses for local dev
 tests/                   # Unit, contract, and golden-set regression tests
 benchmarks/              # Latency / cost baseline scripts
 doc/
-└── daigrams/            # Architecture and workflow diagrams referenced in this README
+└── diagrams/            # Architecture and workflow diagrams referenced in this README
 ```
 
 ---
