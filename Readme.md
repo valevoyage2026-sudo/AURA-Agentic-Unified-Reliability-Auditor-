@@ -28,7 +28,7 @@ The system is organized into five layers. Each layer is documented below with it
 
 ### 2. End-to-end processing architecture
 
-![AI Query Processing Architecture](doc/diagrams/Agent_Workflow.svg)
+![AI Query Processing Architecture](doc/diagrams/Arc_Diagram.svg)
 
 This is the same system redrawn as a straight-line data-flow, layer by layer:
 
