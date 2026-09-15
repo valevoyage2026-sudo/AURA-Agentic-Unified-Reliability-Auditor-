@@ -57,21 +57,36 @@ class GraphRetriever:
             logger.warning("Neo4j driver unavailable or empty entities list; returning empty evidence list")
             return []
 
-        cypher_query = """
-        MATCH (e:Entity)-[r]->(target:Entity)
-        WHERE toLower(e.name) IN [entity IN $entities | toLower(entity)]
-        RETURN e.name AS subject, type(r) AS relation, target.name AS object,
-               r.last_verified AS last_verified,
-               r.confidence AS confidence,
-               r.source_trust_tier AS source_trust_tier,
-               r.source_id AS source_id
-        LIMIT $limit
-        """
+        if relation_type:
+            cypher_query = """
+            MATCH (e:Entity)-[r]->(target:Entity)
+            WHERE toLower(e.name) IN [entity IN $entities | toLower(entity)]
+              AND type(r) = $relation_type
+            RETURN e.name AS subject, type(r) AS relation, target.name AS object,
+                   r.last_verified AS last_verified,
+                   r.confidence AS confidence,
+                   r.source_trust_tier AS source_trust_tier,
+                   r.source_id AS source_id
+            LIMIT $limit
+            """
+            params = {"entities": entities, "relation_type": relation_type, "limit": limit}
+        else:
+            cypher_query = """
+            MATCH (e:Entity)-[r]->(target:Entity)
+            WHERE toLower(e.name) IN [entity IN $entities | toLower(entity)]
+            RETURN e.name AS subject, type(r) AS relation, target.name AS object,
+                   r.last_verified AS last_verified,
+                   r.confidence AS confidence,
+                   r.source_trust_tier AS source_trust_tier,
+                   r.source_id AS source_id
+            LIMIT $limit
+            """
+            params = {"entities": entities, "limit": limit}
 
         evidence_list: List[Evidence] = []
         try:
             with self.driver.session() as session:
-                result = session.run(cypher_query, entities=entities, limit=limit)
+                result = session.run(cypher_query, **params)
                 for record in result:
                     subject = record.get("subject", "")
                     relation = record.get("relation", "")
@@ -101,3 +116,14 @@ class GraphRetriever:
         except Exception as e:
             logger.error(f"Neo4j lookup error: {e}")
             return []
+
+    def graph_lookup(
+        self,
+        entities: List[str],
+        relation_type: Optional[str] = None,
+        limit: int = 10,
+    ) -> List[Evidence]:
+        """
+        Alias for lookup method matching Week 1 specification.
+        """
+        return self.lookup(entities=entities, relation_type=relation_type, limit=limit)
