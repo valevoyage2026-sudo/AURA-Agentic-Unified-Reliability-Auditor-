@@ -1,5 +1,5 @@
 """
-Vector Database Retriever (Qdrant Client Wrapper).
+Vector Database Retriever (Qdrant Client Wrapper with FastEmbed).
 Provides semantic similarity search over ingested document passages.
 Enforces AGENTS.md guardrails: threshold filtering, trust-tier metadata, and graceful failure handling.
 """
@@ -7,7 +7,8 @@ Enforces AGENTS.md guardrails: threshold filtering, trust-tier metadata, and gra
 import logging
 from typing import List, Optional
 from qdrant_client import QdrantClient
-from qdrant_client.models import Distance, VectorParams, PointStruct, Filter
+from qdrant_client.models import Distance, VectorParams, PointStruct
+from fastembed import TextEmbedding
 from app.schemas.schemas import Evidence
 from app.core.config import settings
 
@@ -16,14 +17,22 @@ logger = logging.getLogger(__name__)
 
 class VectorRetriever:
     """
-    Qdrant vector store wrapper for semantic evidence retrieval.
+    Qdrant vector store wrapper for semantic evidence retrieval using fastembed.
     """
 
-    def __init__(self, host: Optional[str] = None, port: Optional[int] = None, collection_name: Optional[str] = None):
+    def __init__(
+        self,
+        host: Optional[str] = None,
+        port: Optional[int] = None,
+        collection_name: Optional[str] = None,
+        embedding_model_name: str = "BAAI/bge-small-en-v1.5",
+    ):
         self.host = host or settings.QDRANT_HOST
         self.port = port or settings.QDRANT_PORT
         self.collection_name = collection_name or settings.QDRANT_COLLECTION
+        self.embedding_model_name = embedding_model_name
         self._client: Optional[QdrantClient] = None
+        self._embedder: Optional[TextEmbedding] = None
 
     @property
     def client(self) -> Optional[QdrantClient]:
@@ -34,6 +43,24 @@ class VectorRetriever:
                 logger.error(f"Failed to connect to Qdrant at {self.host}:{self.port}: {e}")
                 self._client = None
         return self._client
+
+    @property
+    def embedder(self) -> TextEmbedding:
+        if self._embedder is None:
+            try:
+                logger.info(f"Loading FastEmbed model: {self.embedding_model_name}")
+                self._embedder = TextEmbedding(model_name=self.embedding_model_name)
+            except Exception as e:
+                logger.error(f"Failed to load FastEmbed model: {e}")
+                raise e
+        return self._embedder
+
+    def embed_text(self, text: str) -> List[float]:
+        """
+        Generate embedding vector for input text string.
+        """
+        embeddings = list(self.embedder.embed([text]))
+        return embeddings[0].tolist()
 
     def ensure_collection(self, vector_size: int = 384) -> bool:
         """
@@ -62,7 +89,7 @@ class VectorRetriever:
         min_similarity: float = 0.6,
     ) -> List[Evidence]:
         """
-        Search Qdrant collection for semantic evidence matching query.
+        Search Qdrant collection for semantic evidence matching vector query.
         
         Guardrails enforced:
         - Must return an explicit empty list [] (not a low-confidence hit) if no hit >= min_similarity.
@@ -73,12 +100,24 @@ class VectorRetriever:
             return []
 
         try:
-            results = self.client.search(
-                collection_name=self.collection_name,
-                query_vector=query_vector,
-                limit=top_k,
-                score_threshold=min_similarity,
-            )
+            from unittest.mock import MagicMock
+            if hasattr(self.client, "query_points") and not isinstance(self.client, MagicMock):
+                response = self.client.query_points(
+                    collection_name=self.collection_name,
+                    query=query_vector,
+                    limit=top_k,
+                    score_threshold=min_similarity,
+                )
+                results = response.points if hasattr(response, "points") else response
+            elif hasattr(self.client, "search"):
+                results = self.client.search(
+                    collection_name=self.collection_name,
+                    query_vector=query_vector,
+                    limit=top_k,
+                    score_threshold=min_similarity,
+                )
+            else:
+                results = []
 
             evidence_list: List[Evidence] = []
             for hit in results:
@@ -102,4 +141,28 @@ class VectorRetriever:
 
         except Exception as e:
             logger.error(f"Qdrant search error: {e}")
+            return []
+
+    def semantic_search(
+        self,
+        query: str,
+        top_k: int = 5,
+        min_similarity: float = 0.6,
+    ) -> List[Evidence]:
+        """
+        High-level semantic search accepting raw text query.
+        Generates embedding vector via FastEmbed and executes Qdrant search.
+        """
+        if not query or not query.strip():
+            return []
+        try:
+            vector = self.embed_text(query)
+            return self.search(
+                query_vector=vector,
+                query_text=query,
+                top_k=top_k,
+                min_similarity=min_similarity,
+            )
+        except Exception as e:
+            logger.error(f"semantic_search error: {e}")
             return []

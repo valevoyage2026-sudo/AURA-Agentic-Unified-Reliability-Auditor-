@@ -107,7 +107,7 @@ def test_hybrid_retriever_unreachable_store_fallback():
     mock_vector.search.side_effect = Exception("Qdrant store down")
 
     mock_graph = MagicMock()
-    mock_graph.lookup.return_value = [
+    mock_graph.graph_lookup.return_value = [
         Evidence(
             source_id="g1",
             text="(AURA) -[USES]-> (FastAPI)",
