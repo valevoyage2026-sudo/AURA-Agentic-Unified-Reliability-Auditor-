@@ -1,101 +1,293 @@
 import React from 'react';
-import { useAuraStore } from '../../store/useAuraStore';
-import { ShieldCheck, Moon, Settings, User, Activity } from 'lucide-react';
+import { useAuraStore, auraStore } from '../../store/useAuraStore';
+import { getExecutionAdapter } from '../../services/executionAdapter';
+import {
+  ShieldCheck,
+  Moon,
+  Sun,
+  Settings,
+  Pause,
+  Play,
+  RotateCcw,
+  AlertTriangle,
+  FileText,
+  HelpCircle,
+  Zap,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 
 export const HeaderBanner: React.FC = () => {
+  const theme = useAuraStore((s) => s.theme);
   const mission = useAuraStore((s) => s.mission);
   const activeAgentsCount = useAuraStore((s) => s.activeAgentsCount);
   const totalAgentsCount = useAuraStore((s) => s.totalAgentsCount);
-  const totalTokens = useAuraStore((s) => s.totalTokens);
+  const issuesCount = useAuraStore((s) => s.issuesCount);
+  const evidenceCount = useAuraStore((s) => s.evidenceCount);
+  const claimsCount = useAuraStore((s) => s.claimsCount);
   const avgLatency = useAuraStore((s) => s.avgLatency);
-  const backendStatus = useAuraStore((s) => s.backendStatus);
+  const simulationStatus = useAuraStore((s) => s.simulationStatus);
+  const isLeftSidebarOpen = useAuraStore((s) => s.isLeftSidebarOpen);
+  const isRightInspectorOpen = useAuraStore((s) => s.isRightInspectorOpen);
+  const soundMuted = useAuraStore((s) => s.soundMuted);
+
+  const isDark = theme === 'dark';
+  const adapter = getExecutionAdapter('simulation');
+
+  const handleStartSimulation = () => {
+    adapter.startAudit('Analyze salary increase trends for tech roles (2022-2025)', 'audit_only');
+  };
+
+  const handlePauseResume = () => {
+    if (simulationStatus === 'running') {
+      adapter.pauseAudit();
+    } else if (simulationStatus === 'paused') {
+      adapter.resumeAudit();
+    } else {
+      handleStartSimulation();
+    }
+  };
+
+  const handleReset = () => {
+    adapter.cancelAudit();
+  };
 
   return (
-    <header className="h-16 bg-slate-950/80 border-b border-cyan-900/30 px-4 flex items-center justify-between backdrop-blur-md select-none z-20">
+    <header
+      className={`h-16 px-4 flex items-center justify-between border-b transition-colors select-none z-20 ${
+        isDark
+          ? 'bg-slate-950/90 border-cyan-900/30 text-slate-100'
+          : 'bg-white/95 border-slate-200 text-slate-900 shadow-sm'
+      }`}
+    >
       {/* Left Branding & Mission */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4">
+        {/* Toggle Left Sidebar Button */}
+        <button
+          onClick={() => auraStore.toggleLeftSidebar()}
+          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+            isDark
+              ? 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-cyan-400'
+              : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-cyan-700'
+          }`}
+          title={isLeftSidebarOpen ? 'Collapse Left Sidebar' : 'Expand Left Sidebar'}
+        >
+          {isLeftSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+        </button>
+
         <div className="flex items-center gap-3">
-          <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500/20 to-indigo-500/10 border border-cyan-500/40 shadow-lg shadow-cyan-500/10">
-            <ShieldCheck className="w-6 h-6 text-cyan-400" />
+          <div
+            className={`relative flex items-center justify-center w-10 h-10 rounded-xl border shadow-md ${
+              isDark
+                ? 'bg-gradient-to-br from-cyan-500/20 to-indigo-500/10 border-cyan-500/40 text-cyan-400'
+                : 'bg-cyan-50 border-cyan-300 text-cyan-600'
+            }`}
+          >
+            <ShieldCheck className="w-6 h-6" />
             <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-cyan-400 rounded-full animate-ping" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-sm font-bold tracking-widest text-slate-100 uppercase">A U R A</h1>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/50 font-mono">
+              <h1 className="text-sm font-bold tracking-widest uppercase">A U R A</h1>
+              <span
+                className={`text-[9px] px-1.5 py-0.5 rounded font-mono font-semibold ${
+                  isDark ? 'bg-cyan-950 text-cyan-400 border border-cyan-800/50' : 'bg-cyan-100 text-cyan-700 border border-cyan-200'
+                }`}
+              >
                 v0.1.0
               </span>
             </div>
-            <p className="text-[10px] text-slate-400 tracking-wider">MULTI-AGENT PLATFORM</p>
+            <p className={`text-[10px] tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+              MULTI-AGENT PLATFORM
+            </p>
           </div>
         </div>
 
-        <div className="hidden lg:block w-px h-8 bg-slate-800" />
+        <div className={`hidden lg:block w-px h-8 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
 
         {/* Mission Details */}
         <div className="hidden lg:flex flex-col">
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-400 font-medium">Mission</span>
-            <span className="text-slate-100 font-semibold tracking-wide">{mission.title}</span>
+            <span className={isDark ? 'text-slate-400 font-medium' : 'text-slate-500 font-medium'}>MISSION</span>
+            <span className="font-semibold tracking-wide">{mission.title}</span>
           </div>
-          <span className="text-[11px] text-slate-400">{mission.description}</span>
+          <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{mission.description}</span>
         </div>
       </div>
 
-      {/* Center Execution & Metrics Status */}
+      {/* Center Execution Progress & Top Metrics */}
       <div className="flex items-center gap-6">
-        <div className="flex items-center gap-3 px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-800">
-          <div className="relative w-4 h-4 flex items-center justify-center">
-            <div className="w-3.5 h-3.5 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+        {/* Mission Progress Bar Widget */}
+        <div
+          className={`flex items-center gap-3 px-3 py-1.5 rounded-full border ${
+            isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-slate-100 border-slate-200'
+          }`}
+        >
+          <div className="flex items-center gap-1.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-bold tracking-wider text-emerald-400 uppercase">{mission.status}</span>
           </div>
-          <div className="flex flex-col">
-            <span className="text-[9px] font-bold text-cyan-400 uppercase tracking-wider">{mission.status}</span>
-            <span className="text-xs font-mono text-slate-200 font-medium">{mission.elapsedTime}</span>
+          <div className="w-24 h-1.5 bg-slate-700/40 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 rounded-full transition-all duration-300"
+              style={{ width: `${mission.progress}%` }}
+            />
           </div>
+          <span className="text-xs font-mono font-bold text-cyan-400">{mission.progress}%</span>
         </div>
 
-        <div className="hidden md:flex items-center gap-5 text-xs font-mono">
+        {/* Metrics Counter Items */}
+        <div className="hidden xl:flex items-center gap-5 text-xs font-mono">
           <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Agents</span>
-            <div className="flex items-center gap-1">
-              <span className="text-cyan-400 font-bold">{activeAgentsCount}</span>
-              <span className="text-slate-500">/ {totalAgentsCount}</span>
+            <span className={`text-[9px] uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Agents</span>
+            <span className="font-bold text-cyan-400">
+              {activeAgentsCount} / {totalAgentsCount}
+            </span>
+          </div>
+
+          <div className="flex flex-col">
+            <span className={`text-[9px] uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Issues</span>
+            <div className="flex items-center gap-1 text-amber-400 font-bold">
+              <AlertTriangle className="w-3 h-3" />
+              <span>{issuesCount}</span>
             </div>
           </div>
+
           <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Tokens</span>
-            <span className="text-slate-200 font-bold">{totalTokens}</span>
+            <span className={`text-[9px] uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Evidence</span>
+            <div className="flex items-center gap-1">
+              <FileText className="w-3 h-3 text-cyan-400" />
+              <span className="font-bold">{evidenceCount}</span>
+            </div>
           </div>
+
           <div className="flex flex-col">
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider">Latency</span>
-            <span className="text-slate-200 font-bold">{avgLatency}</span>
+            <span className={`text-[9px] uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Claims</span>
+            <div className="flex items-center gap-1">
+              <HelpCircle className="w-3 h-3 text-sky-400" />
+              <span className="font-bold">{claimsCount}</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col">
+            <span className={`text-[9px] uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Latency</span>
+            <div className="flex items-center gap-1 text-cyan-400 font-bold">
+              <Zap className="w-3 h-3" />
+              <span>{avgLatency}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Right Controls */}
+      {/* Right Controls (Simulation Controls & Theme Toggle) */}
       <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2 px-2.5 py-1 rounded-md bg-slate-900 border border-slate-800 text-[11px]">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              backendStatus === 'Online' ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-            }`}
-          />
-          <span className="text-slate-300 font-mono hidden sm:inline">{backendStatus}</span>
+        {/* Simulation Controls */}
+        <div className="flex items-center gap-1">
+          {simulationStatus === 'idle' ? (
+            <button
+              onClick={handleStartSimulation}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-md transition-all cursor-pointer"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" /> Start Simulation
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handlePauseResume}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-200'
+                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700'
+                }`}
+              >
+                {simulationStatus === 'running' ? (
+                  <>
+                    <Pause className="w-3.5 h-3.5 text-amber-400" /> Pause
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-3.5 h-3.5 text-emerald-400" /> Resume
+                  </>
+                )}
+              </button>
+
+              <button
+                onClick={handleReset}
+                className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                  isDark
+                    ? 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-rose-400'
+                    : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-rose-600'
+                }`}
+                title="Reset Simulation"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            </>
+          )}
         </div>
 
-        <button className="p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 transition-colors">
-          <Moon className="w-4 h-4" />
+        {/* Sound FX Toggle Button */}
+        <button
+          onClick={() => auraStore.toggleSound()}
+          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+            soundMuted
+              ? isDark
+                ? 'bg-slate-900 border-slate-800 text-slate-500'
+                : 'bg-slate-100 border-slate-300 text-slate-400'
+              : isDark
+              ? 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-cyan-400'
+              : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-cyan-700'
+          }`}
+          title={soundMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+        >
+          {soundMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
-        <button className="p-2 rounded-lg bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 transition-colors">
+
+        {/* Theme Toggle Button */}
+        <button
+          onClick={() => auraStore.toggleTheme()}
+          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+            isDark
+              ? 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-amber-400'
+              : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700'
+          }`}
+          title={`Switch to ${isDark ? 'Light' : 'Dark'} Mode`}
+        >
+          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
+
+        {/* Toggle Right Inspector Button */}
+        <button
+          onClick={() => auraStore.toggleRightInspector()}
+          className={`p-2 rounded-lg border transition-colors cursor-pointer ${
+            isDark
+              ? 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-cyan-400'
+              : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-cyan-700'
+          }`}
+          title={isRightInspectorOpen ? 'Collapse Inspector Panel' : 'Expand Inspector Panel'}
+        >
+          {isRightInspectorOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+        </button>
+
+        <button
+          className={`p-2 rounded-lg border transition-colors ${
+            isDark
+              ? 'bg-slate-900 hover:bg-slate-800 border-slate-800 text-slate-400 hover:text-slate-200'
+              : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-600'
+          }`}
+        >
           <Settings className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-          <div className="w-7 h-7 rounded-full bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400 font-bold text-xs">
+        <div className={`flex items-center gap-2 pl-2 border-l ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+          <div className="w-7 h-7 rounded-full bg-cyan-600 text-white font-bold text-xs flex items-center justify-center">
             V
           </div>
-          <span className="text-xs text-slate-200 font-medium hidden xl:inline">Vale</span>
+          <span className="text-xs font-semibold hidden xl:inline">Vale</span>
         </div>
       </div>
     </header>

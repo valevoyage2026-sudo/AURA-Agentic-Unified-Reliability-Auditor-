@@ -8,7 +8,20 @@ export type AgentId =
   | 'evaluator'
   | 'writer';
 
-export type AgentStatus = 'active' | 'processing' | 'waiting' | 'idle' | 'warning' | 'error';
+export type AgentStatus =
+  | 'idle'
+  | 'queued'
+  | 'active'
+  | 'processing'
+  | 'waiting'
+  | 'completed'
+  | 'failed'
+  | 'conflict';
+
+export interface RecentActivityItem {
+  timestamp: string;
+  text: string;
+}
 
 export interface AgentInfo {
   id: AgentId;
@@ -26,6 +39,7 @@ export interface AgentInfo {
   latencyMs: number;
   model: string;
   elapsedTime?: string;
+  recentActivity?: RecentActivityItem[];
 }
 
 export type EventType =
@@ -34,6 +48,9 @@ export type EventType =
   | 'message_sent'
   | 'processing_update'
   | 'result_produced'
+  | 'conflict_detected'
+  | 'conflict_resolved'
+  | 'audit_completed'
   | 'error_raised';
 
 export interface AgentEvent {
@@ -77,9 +94,24 @@ export interface ExecutionFlowStep {
   status: AgentStatus;
 }
 
-// Execution Adapter Interface (Directive 4)
+export interface EvidenceSource {
+  id: number;
+  domain: string;
+  title: string;
+  trustTier: 'High' | 'Medium' | 'Low';
+}
+
+export interface KeyClaimItem {
+  id: string;
+  text: string;
+}
+
+export type ThemeMode = 'dark' | 'light';
+
 export interface ExecutionAdapter {
   subscribe(onEvent: (event: AgentEvent) => void): () => void;
   startAudit(query: string, mode: 'generate_and_audit' | 'audit_only'): Promise<void>;
+  pauseAudit(): void;
+  resumeAudit(): void;
   cancelAudit(): void;
 }

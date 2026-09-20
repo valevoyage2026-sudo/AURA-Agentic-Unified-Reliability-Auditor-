@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  cacheDir: './.vite_cache',
+  cacheDir: '/tmp/vite_aura_cache',
   server: {
     host: '0.0.0.0',
     port: 3005,
