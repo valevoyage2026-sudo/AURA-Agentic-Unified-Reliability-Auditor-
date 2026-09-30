@@ -1,8 +1,8 @@
-# AURA — Agentic Multi-Agent Framework for LLM Fact Verification & Hallucination Mitigation
+# AURA — Enterprise Agentic Framework for High-Stakes Document Compliance & Hallucination Auditing
 
-AURA audits an LLM-generated response (or a user query + response pair), decomposes it into verifiable claims, checks each claim against retrieved evidence and structured knowledge, aggregates the results into a reliability assessment, and — where needed — rewrites unsupported or contradictory content before returning a final, evidence-grounded answer.
+AURA is an enterprise-grade agentic auditing system designed for high-stakes compliance environments (legal, financial, healthcare, regulatory filings). It audits complex documents and LLM-generated reports, decomposes them into verifiable claims, checks each claim against retrieved evidence and structured knowledge bases (Qdrant & Neo4j), aggregates multi-agent outputs into a deterministic reliability assessment, and generates verifiable compliance audit reports.
 
-AURA does not claim to eliminate hallucination. It detects unsupported or conflicting content, grounds corrections in verified evidence, and is explicit about what it could *not* verify rather than silently passing it through.
+Instead of targeting sub-second consumer chat, AURA is optimized as an **Automated Compliance Auditor for High-Stakes Reports** — detecting unsupported statements, invalid citations, and internal contradictions while providing full audit traceability to prevent multi-million dollar compliance failures and lawsuits.
 
 ---
 

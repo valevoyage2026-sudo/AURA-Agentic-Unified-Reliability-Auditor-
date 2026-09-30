@@ -46,6 +46,7 @@ export interface AuraStoreState {
   isLeftSidebarOpen: boolean;
   isRightInspectorOpen: boolean;
   soundMuted: boolean;
+  viewState: 'landing' | 'login' | 'app';
 }
 
 const initialAgents: Record<AgentId, AgentInfo> = {
@@ -341,6 +342,7 @@ let state: AuraStoreState = {
   isLeftSidebarOpen: true,
   isRightInspectorOpen: true,
   soundMuted: false,
+  viewState: 'landing',
 };
 
 const listeners = new Set<() => void>();
@@ -365,6 +367,11 @@ export const auraStore = {
   toggleTheme: () => {
     playSound('toggle');
     state = { ...state, theme: state.theme === 'dark' ? 'light' : 'dark' };
+    notify();
+  },
+  setViewState: (viewState: AuraStoreState['viewState']) => {
+    playSound('toggle');
+    state = { ...state, viewState };
     notify();
   },
   toggleLeftSidebar: () => {
