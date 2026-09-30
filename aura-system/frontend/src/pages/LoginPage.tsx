@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { auraStore } from '../store/useAuraStore';
-import { HeroGraph } from '../components/network/HeroGraph';
 
 const GoogleIcon: React.FC<{ className?: string }> = ({ className = "w-4 h-4" }) => (
   <svg className={className} viewBox="0 0 24 24">
@@ -47,10 +46,6 @@ export const LoginPage: React.FC = () => {
           <div className="w-5 h-5 bg-cyan-500 rounded-sm"></div>
           <b className="tracking-widest text-md font-semibold">AURA</b>
           <small className="text-slate-400 border-l border-slate-700 pl-3">Agent operations</small>
-        </div>
-        
-        <div className="w-full h-[260px] lg:h-[300px] bg-slate-950 border border-slate-800 rounded-md relative overflow-hidden shadow-xl">
-          <HeroGraph />
         </div>
         
         <div>
