@@ -40,7 +40,7 @@ export interface AuraStoreState {
   executionFlow: ExecutionFlowStep[];
   sources: EvidenceSource[];
   keyClaims: KeyClaimItem[];
-  activeTab: 'Overview' | 'Executions' | 'Agents' | 'Evidence' | 'Artifacts' | 'Logs';
+  activeTab: 'AuditWorkbench' | 'AgentConfig' | 'Overview' | 'Executions' | 'Agents' | 'Evidence' | 'Artifacts' | 'Logs';
   adapterMode: 'simulation' | 'real';
   simulationStatus: 'idle' | 'running' | 'paused' | 'completed';
   isLeftSidebarOpen: boolean;
@@ -336,7 +336,7 @@ let state: AuraStoreState = {
   executionFlow: initialExecutionFlow,
   sources: initialSources,
   keyClaims: initialKeyClaims,
-  activeTab: 'Overview',
+  activeTab: 'AuditWorkbench',
   adapterMode: 'simulation',
   simulationStatus: 'idle',
   isLeftSidebarOpen: true,

@@ -1,16 +1,17 @@
 import React, { useEffect } from 'react';
 import { HeaderBanner } from './components/layout/HeaderBanner';
 import { AgentSidebar } from './components/sidebar/AgentSidebar';
-import { LiveAgentNetworkCanvas } from './components/network/LiveAgentNetworkCanvas';
-import { ExecutionFlowTimeline } from './components/network/ExecutionFlowTimeline';
-import { AgentInspectorPanel } from './components/inspector/AgentInspectorPanel';
 import { useAuraStore, auraStore } from './store/useAuraStore';
 import { LandingPage } from './pages/LandingPage';
 import { LoginPage } from './pages/LoginPage';
+import { AuditWorkbench } from './components/workbench/AuditWorkbench';
+import { MinimalDashboard } from './components/dashboard/MinimalDashboard';
+import { AgentConfigurationPanel } from './components/config/AgentConfigurationPanel';
 
 export default function App() {
   const theme = useAuraStore((s) => s.theme);
   const viewState = useAuraStore((s) => s.viewState);
+  const activeTab = useAuraStore((s) => s.activeTab);
   const isDark = theme === 'dark';
 
   // Check backend health on mount
@@ -30,22 +31,24 @@ export default function App() {
         isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'
       }`}
     >
-      {/* Top Header Command Banner */}
+      {/* Top Enterprise Header */}
       <HeaderBanner />
 
-      {/* Main 3-Column Command Dashboard */}
+      {/* Main Command Dashboard */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Left Agent Roster & Navigation Sidebar */}
+        {/* Navigation Sidebar */}
         <AgentSidebar />
 
-        {/* Center Main Live Agent Network Canvas & Execution Flow */}
+        {/* Center Main Module */}
         <main className={`flex-1 flex flex-col overflow-hidden ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
-          <LiveAgentNetworkCanvas />
-          <ExecutionFlowTimeline />
+          {activeTab === 'AuditWorkbench' ? (
+            <AuditWorkbench />
+          ) : activeTab === 'AgentConfig' ? (
+            <AgentConfigurationPanel />
+          ) : (
+            <MinimalDashboard />
+          )}
         </main>
-
-        {/* Right Inspection & Event Stream Panel */}
-        <AgentInspectorPanel />
       </div>
     </div>
   );
