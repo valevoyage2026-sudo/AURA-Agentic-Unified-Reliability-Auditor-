@@ -7,10 +7,19 @@ from typing import Literal, Optional, List, Dict
 from pydantic import BaseModel, Field
 
 
+import hashlib
+
 ClaimType = Literal["factual-atomic", "factual-compound", "citation", "subjective", "unverifiable"]
 
 
+def generate_claim_id(text: str, index: int = 0) -> str:
+    """Generate a canonical, deterministic claim_id based on text span and index."""
+    digest = hashlib.md5(f"{text}_{index}".encode("utf-8")).hexdigest()[:8]
+    return f"claim_{digest}"
+
+
 class Claim(BaseModel):
+
     id: str = Field(description="Canonical claim identifier, e.g., claim_a1b2c3d4e5f6")
     text: str = Field(description="Verbatim text span extracted from original text")
     type: ClaimType

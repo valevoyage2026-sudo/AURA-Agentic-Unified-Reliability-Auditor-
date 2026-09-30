@@ -16,5 +16,167 @@
     "mode": "audit_only",
     "text": "AURA is the best fact-checking tool ever created.",
     "expected_claim_types": ["subjective"]
+  },
+  {
+    "id": "sample_004",
+    "mode": "audit_only",
+    "text": "Water boils at 100 degrees Celsius at sea level under standard atmospheric pressure.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_005",
+    "mode": "audit_only",
+    "text": "Albert Einstein published his theory of general relativity in 1915.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_006",
+    "mode": "audit_only",
+    "text": "According to Johnson (2019), Python was developed by Guido van Rossum in 1991.",
+    "expected_claim_types": ["citation", "factual-atomic"]
+  },
+  {
+    "id": "sample_007",
+    "mode": "audit_only",
+    "text": "Artificial intelligence will completely replace human programmers by next year.",
+    "expected_claim_types": ["unverifiable"]
+  },
+  {
+    "id": "sample_008",
+    "mode": "audit_only",
+    "text": "Vanilla ice cream is vastly superior to chocolate ice cream in every way.",
+    "expected_claim_types": ["subjective"]
+  },
+  {
+    "id": "sample_009",
+    "mode": "audit_only",
+    "text": "The Moon orbits Earth at an average distance of approximately 384,400 kilometers.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_010",
+    "mode": "audit_only",
+    "text": "According to Miller et al. (2022), renewable energy generation exceeded fossil fuels in Europe in 2020.",
+    "expected_claim_types": ["citation", "factual-compound"]
+  },
+  {
+    "id": "sample_011",
+    "mode": "audit_only",
+    "text": "The Great Wall of China is visible from space with the naked eye.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_012",
+    "mode": "audit_only",
+    "text": "Penicillin was discovered by Alexander Fleming in 1928 at St. Mary's Hospital in London.",
+    "expected_claim_types": ["factual-compound"]
+  },
+  {
+    "id": "sample_013",
+    "mode": "audit_only",
+    "text": "This novel is the most heartbreaking work of literature ever published.",
+    "expected_claim_types": ["subjective"]
+  },
+  {
+    "id": "sample_014",
+    "mode": "audit_only",
+    "text": "Humanity will establish a permanent city on Mars before 2045.",
+    "expected_claim_types": ["unverifiable"]
+  },
+  {
+    "id": "sample_015",
+    "mode": "audit_only",
+    "text": "As demonstrated by Davis (2020), TCP uses a three-way handshake to establish connection.",
+    "expected_claim_types": ["citation", "factual-atomic"]
+  },
+  {
+    "id": "sample_016",
+    "mode": "audit_only",
+    "text": "Light travels at approximately 299,792,458 meters per second in a vacuum.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_017",
+    "mode": "audit_only",
+    "text": "PostgreSQL was created at UC Berkeley under the direction of Michael Stonebraker.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_018",
+    "mode": "audit_only",
+    "text": "Dark matter makes up roughly 85% of the total matter in the universe.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_019",
+    "mode": "audit_only",
+    "text": "According to World Bank (2023), global GDP exceeded 100 trillion USD in 2022.",
+    "expected_claim_types": ["citation", "factual-atomic"]
+  },
+  {
+    "id": "sample_020",
+    "mode": "audit_only",
+    "text": "Linux kernel version 1.0 was released in March 1994.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_021",
+    "mode": "audit_only",
+    "text": "Quantum entanglement allows faster-than-light information transmission across galaxies.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_022",
+    "mode": "audit_only",
+    "text": "Paris is the capital of France. Berlin is the capital of Germany.",
+    "expected_claim_types": ["factual-atomic", "factual-atomic"]
+  },
+  {
+    "id": "sample_023",
+    "mode": "audit_only",
+    "text": "According to UN Report (2021), global population reached 8 billion in November 2022.",
+    "expected_claim_types": ["citation", "factual-atomic"]
+  },
+  {
+    "id": "sample_024",
+    "mode": "audit_only",
+    "text": "Supervised learning models require labeled training datasets.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_025",
+    "mode": "audit_only",
+    "text": "The Mona Lisa was painted by Leonardo da Vinci between 1503 and 1519.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_026",
+    "mode": "audit_only",
+    "text": "In 1969, Apollo 11 landed astronauts Neil Armstrong and Buzz Aldrin on the Moon.",
+    "expected_claim_types": ["factual-compound"]
+  },
+  {
+    "id": "sample_027",
+    "mode": "audit_only",
+    "text": "According to NASA (2020), Mars has two moons named Phobos and Deimos.",
+    "expected_claim_types": ["citation", "factual-atomic"]
+  },
+  {
+    "id": "sample_028",
+    "mode": "audit_only",
+    "text": "Mozart's music is aesthetically superior to Beethoven's compositions.",
+    "expected_claim_types": ["subjective"]
+  },
+  {
+    "id": "sample_029",
+    "mode": "audit_only",
+    "text": "The speed of sound in dry air at 20 degrees Celsius is 343 meters per second.",
+    "expected_claim_types": ["factual-atomic"]
+  },
+  {
+    "id": "sample_030",
+    "mode": "audit_only",
+    "text": "DNA double helix structure was discovered by Watson and Crick in 1953.",
+    "expected_claim_types": ["factual-atomic"]
   }
 ]

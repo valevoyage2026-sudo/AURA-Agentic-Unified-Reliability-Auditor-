@@ -1,6 +1,6 @@
 """
 AURA Agents Package.
-Exposes Verification Agents and Evaluator.
+Exposes Verification Agents, Evaluator, Self-Repair Agent, and Response Generator.
 """
 
 from app.agents.base import BaseVerificationAgent
@@ -8,6 +8,8 @@ from app.agents.fact_agent import FactVerificationAgent
 from app.agents.citation_agent import CitationVerificationAgent
 from app.agents.logic_agent import ContradictionAgent
 from app.agents.evaluator_agent import EvaluatorAgent
+from app.agents.self_repair import SelfRepairAgent
+from app.agents.response_generator import ResponseGenerator
 from app.agents.skills import (
     check_entailment,
     check_citation_exists,
@@ -23,6 +25,8 @@ __all__ = [
     "CitationVerificationAgent",
     "ContradictionAgent",
     "EvaluatorAgent",
+    "SelfRepairAgent",
+    "ResponseGenerator",
     "check_entailment",
     "check_citation_exists",
     "detect_numeric_date_conflict",
