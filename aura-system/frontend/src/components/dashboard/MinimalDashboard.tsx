@@ -140,12 +140,12 @@ export const MinimalDashboard: React.FC = () => {
         isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         {/* Table Header Controls */}
-        <div className="p-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+        <div className={`p-4 border-b flex flex-wrap items-center justify-between gap-3 ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
           <div>
-            <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+            <h2 className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
               High-Stakes Audit Executions
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Verified reports with full cryptographic audit certificate lineage.
             </p>
           </div>
@@ -175,8 +175,10 @@ export const MinimalDashboard: React.FC = () => {
                     filterDomain === d
                       ? isDark
                         ? 'bg-indigo-950/80 text-indigo-300 border border-indigo-700'
-                        : 'bg-indigo-100 text-indigo-900 border border-indigo-300'
-                      : 'text-slate-400 hover:text-slate-200'
+                        : 'bg-indigo-100 text-indigo-900 border border-indigo-300 font-bold'
+                      : isDark
+                      ? 'text-slate-400 hover:text-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   {d}
@@ -199,7 +201,7 @@ export const MinimalDashboard: React.FC = () => {
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className={`border-b text-[10px] font-bold uppercase tracking-wider ${
-                isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-50 text-slate-500'
+                isDark ? 'border-slate-800 bg-slate-950/60 text-slate-400' : 'border-slate-200 bg-slate-100 text-slate-600'
               }`}>
                 <th className="py-3 px-4">Document Title</th>
                 <th className="py-3 px-4">Domain</th>
@@ -211,20 +213,22 @@ export const MinimalDashboard: React.FC = () => {
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/40">
+            <tbody className={isDark ? 'divide-y divide-slate-800/40' : 'divide-y divide-slate-200'}>
               {filtered.map((item) => (
-                <tr key={item.id} className={`hover:bg-slate-800/30 transition-colors ${
-                  isDark ? 'text-slate-200' : 'text-slate-800'
+                <tr key={item.id} className={`transition-colors ${
+                  isDark ? 'text-slate-200 hover:bg-slate-800/30' : 'text-slate-900 hover:bg-slate-100/80'
                 }`}>
                   <td className="py-3 px-4 font-semibold">{item.title}</td>
                   <td className="py-3 px-4">
-                    <span className="px-2 py-0.5 rounded-none text-[10px] font-semibold bg-slate-800 border border-slate-700 text-slate-300">
+                    <span className={`px-2 py-0.5 rounded-none text-[10px] font-semibold border ${
+                      isDark ? 'bg-slate-800 border-slate-700 text-slate-300' : 'bg-slate-100 border-slate-300 text-slate-800'
+                    }`}>
                       {item.domain}
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">{item.timestamp}</td>
+                  <td className={`py-3 px-4 font-mono text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{item.timestamp}</td>
                   <td className="py-3 px-4 font-mono">{item.claimsCount} claims</td>
-                  <td className="py-3 px-4 font-mono font-bold text-slate-100">{(item.score * 100).toFixed(1)}%</td>
+                  <td className={`py-3 px-4 font-mono font-bold ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>{(item.score * 100).toFixed(1)}%</td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-0.5 rounded-none text-[10px] font-bold uppercase ${
                       item.status === 'Reliable'
@@ -234,11 +238,13 @@ export const MinimalDashboard: React.FC = () => {
                       {item.status}
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-mono text-[11px] text-slate-400">{item.traceId}</td>
+                  <td className={`py-3 px-4 font-mono text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>{item.traceId}</td>
                   <td className="py-3 px-4 text-right">
                     <button
                       onClick={() => auraStore.setActiveTab('AuditWorkbench')}
-                      className="text-slate-400 hover:text-indigo-400 flex items-center gap-1 text-[11px] ml-auto font-semibold"
+                      className={`flex items-center gap-1 text-[11px] ml-auto font-semibold ${
+                        isDark ? 'text-slate-400 hover:text-indigo-400' : 'text-slate-600 hover:text-indigo-600'
+                      }`}
                     >
                       View Report <ChevronRight className="w-3 h-3" />
                     </button>
