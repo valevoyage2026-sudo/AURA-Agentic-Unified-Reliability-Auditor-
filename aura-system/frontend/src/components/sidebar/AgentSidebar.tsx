@@ -15,8 +15,6 @@ import {
   PlayCircle,
   FileCode,
   List,
-  ExternalLink,
-  Server
 } from 'lucide-react';
 
 const agentIcons: Record<AgentId, React.ReactNode> = {
@@ -86,57 +84,6 @@ export const AgentSidebar: React.FC = () => {
           );
         })}
       </div>
-
-      <div className={`w-full h-px ${isDark ? 'bg-slate-900' : 'bg-slate-200'}`} />
-
-      {/* Infrastructure Tools (pgAdmin, Qdrant, Neo4j) */}
-      <div className="flex flex-col gap-1.5">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-1 flex items-center justify-between">
-          <span>Infrastructure Tools</span>
-          <Server className="w-3 h-3 text-slate-500" />
-        </div>
-
-        <a
-          href="http://localhost:5050"
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center justify-between p-2 rounded-none border border-slate-900 bg-slate-950/60 hover:bg-slate-900 text-xs text-slate-300 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Database className="w-3.5 h-3.5 text-indigo-400" />
-            <span className="font-semibold text-[11px]">pgAdmin 4 (Postgres)</span>
-          </div>
-          <ExternalLink className="w-3 h-3 text-slate-500" />
-        </a>
-
-        <a
-          href="http://localhost:6333/dashboard"
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center justify-between p-2 rounded-none border border-slate-900 bg-slate-950/60 hover:bg-slate-900 text-xs text-slate-300 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5 text-emerald-400" />
-            <span className="font-semibold text-[11px]">Qdrant Vector DB</span>
-          </div>
-          <ExternalLink className="w-3 h-3 text-slate-500" />
-        </a>
-
-        <a
-          href="http://localhost:7474"
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center justify-between p-2 rounded-none border border-slate-900 bg-slate-950/60 hover:bg-slate-900 text-xs text-slate-300 transition-colors"
-        >
-          <div className="flex items-center gap-2">
-            <Layers className="w-3.5 h-3.5 text-amber-400" />
-            <span className="font-semibold text-[11px]">Neo4j Graph UI</span>
-          </div>
-          <ExternalLink className="w-3 h-3 text-slate-500" />
-        </a>
-      </div>
-
-      <div className={`w-full h-px ${isDark ? 'bg-slate-900' : 'bg-slate-200'}`} />
 
       {/* Bottom System Status Box */}
       <div className={`p-3 rounded-none border flex flex-col gap-1.5 ${

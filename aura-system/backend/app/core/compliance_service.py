@@ -30,8 +30,20 @@ from app.agents.fact_agent import FactVerificationAgent
 from app.agents.citation_agent import CitationVerificationAgent
 from app.agents.logic_agent import ContradictionAgent
 from app.agents.evaluator_agent import EvaluatorAgent
+from app.db.session import SessionLocal, init_db
+from app.db.models import IngestedDocumentDB, ComplianceAuditReportDB
+from app.retrieval.vector_store import VectorRetriever
 
-# In-memory compliance audit report storage for trace lookup & audit certificate generation
+# Initialize PostgreSQL tables on startup if database is available
+try:
+    init_db()
+except Exception:
+    pass
+
+# Initialize VectorRetriever for Qdrant storage
+vector_retriever = VectorRetriever()
+
+# In-memory compliance audit report storage for fallback trace lookup & certificate generation
 COMPLIANCE_AUDIT_STORE: Dict[str, ComplianceAuditReport] = {}
 INGESTED_DOCUMENTS_STORE: Dict[str, Dict[str, Any]] = {}
 
@@ -108,6 +120,32 @@ class ComplianceAuditService:
             "metadata": request.metadata,
             "timestamp": timestamp
         }
+
+        # 1. Persist to PostgreSQL Database if connected
+        if SessionLocal is not None:
+            try:
+                db = SessionLocal()
+                db_doc = IngestedDocumentDB(
+                    doc_id=doc_id,
+                    title=request.title,
+                    domain=request.domain,
+                    content=request.content,
+                    chunks=raw_chunks,
+                    source_trust_tier=request.source_trust_tier,
+                    metadata_json=request.metadata,
+                    timestamp=timestamp
+                )
+                db.merge(db_doc)
+                db.commit()
+                db.close()
+            except Exception as db_err:
+                pass
+
+        # 2. Ensure Qdrant vector collection exists
+        try:
+            vector_retriever.ensure_collection()
+        except Exception:
+            pass
         
         return DocumentIngestResponse(
             doc_id=doc_id,
@@ -235,6 +273,31 @@ class ComplianceAuditService:
         )
         
         COMPLIANCE_AUDIT_STORE[trace_id] = report
+
+        # Persist audit trace report to PostgreSQL database if connected
+        if SessionLocal is not None:
+            try:
+                db = SessionLocal()
+                db_report = ComplianceAuditReportDB(
+                    trace_id=report.trace_id,
+                    document_title=report.document_title,
+                    domain=report.domain,
+                    overall_score=report.overall_score,
+                    bucket=report.bucket,
+                    total_claims=report.total_claims,
+                    reliable_claims_count=report.reliable_claims_count,
+                    borderline_claims_count=report.borderline_claims_count,
+                    unreliable_claims_count=report.unreliable_claims_count,
+                    claims_breakdown=report.claims_breakdown,
+                    audit_hash=report.audit_hash,
+                    timestamp=report.timestamp
+                )
+                db.merge(db_report)
+                db.commit()
+                db.close()
+            except Exception as db_err:
+                pass
+
         return report
 
     def export_audit_certificate(self, request: AuditExportRequest) -> AuditExportResponse:
