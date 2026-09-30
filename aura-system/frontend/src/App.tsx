@@ -5,9 +5,12 @@ import { LiveAgentNetworkCanvas } from './components/network/LiveAgentNetworkCan
 import { ExecutionFlowTimeline } from './components/network/ExecutionFlowTimeline';
 import { AgentInspectorPanel } from './components/inspector/AgentInspectorPanel';
 import { useAuraStore, auraStore } from './store/useAuraStore';
+import { LandingPage } from './pages/LandingPage';
+import { LoginPage } from './pages/LoginPage';
 
 export default function App() {
   const theme = useAuraStore((s) => s.theme);
+  const viewState = useAuraStore((s) => s.viewState);
   const isDark = theme === 'dark';
 
   // Check backend health on mount
@@ -17,6 +20,9 @@ export default function App() {
       .then((data) => auraStore.setBackendStatus(data.status === 'healthy' ? 'Online' : 'Offline'))
       .catch(() => auraStore.setBackendStatus('Offline'));
   }, []);
+
+  if (viewState === 'landing') return <LandingPage />;
+  if (viewState === 'login') return <LoginPage />;
 
   return (
     <div

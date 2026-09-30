@@ -34,3 +34,4 @@ Thumbs.db
 node_modules/
 dist-ssr/
 *.local
+aura-system/reference/aura-suite(1).html

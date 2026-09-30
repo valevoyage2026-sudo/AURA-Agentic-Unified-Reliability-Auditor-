@@ -77,17 +77,16 @@ class HybridRetriever:
                 logger.error(f"Vector retrieval failure: {e}")
                 partial_retrieval = True
 
-        # 2. Graph Relationship Lookup
-        if entities:
+        # 2. Graph Relationship Lookup (Optional / Disabled)
+        if entities and self.graph_store and self.graph_store.driver:
             try:
                 graph_evidence = self.graph_store.graph_lookup(entities=entities)
                 raw_evidence.extend(graph_evidence)
                 sources_contacted.append("neo4j")
             except Exception as e:
                 logger.error(f"Graph retrieval failure: {e}")
-                partial_retrieval = True
 
-        if not self.vector_store.client or not self.graph_store.driver:
+        if not self.vector_store.client:
             partial_retrieval = True
 
         # Apply trust weighting and staleness decay

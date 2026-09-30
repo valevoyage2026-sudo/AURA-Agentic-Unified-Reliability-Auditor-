@@ -19,6 +19,7 @@ import {
   PanelRightOpen,
   Volume2,
   VolumeX,
+  LogOut,
 } from 'lucide-react';
 
 export const HeaderBanner: React.FC = () => {
@@ -288,6 +289,13 @@ export const HeaderBanner: React.FC = () => {
             V
           </div>
           <span className="text-xs font-semibold hidden xl:inline">Vale</span>
+          <button 
+            onClick={() => auraStore.setViewState('landing')}
+            className="p-1.5 ml-1 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors"
+            title="Sign Out"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </header>
