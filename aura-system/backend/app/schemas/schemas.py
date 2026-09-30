@@ -7,10 +7,13 @@ from typing import Literal, Optional, List, Dict
 from pydantic import BaseModel, Field
 
 
+ClaimType = Literal["factual-atomic", "factual-compound", "citation", "subjective", "unverifiable"]
+
+
 class Claim(BaseModel):
     id: str = Field(description="Canonical claim identifier, e.g., claim_a1b2c3d4e5f6")
     text: str = Field(description="Verbatim text span extracted from original text")
-    type: Literal["factual-atomic", "factual-compound", "citation", "subjective", "unverifiable"]
+    type: ClaimType
     char_span: tuple[int, int] = Field(description="Span offset (start_char, end_char) in original text")
     depends_on: List[str] = Field(default_factory=list, description="IDs of parent claims if decomposed")
 
