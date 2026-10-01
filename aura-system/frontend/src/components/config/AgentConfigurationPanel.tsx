@@ -121,14 +121,16 @@ export const AgentConfigurationPanel: React.FC = () => {
         isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'
       }`}>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-none bg-indigo-950/60 text-indigo-400 border border-indigo-800/80">
+          <div className={`p-2 rounded-none border ${
+            isDark ? 'bg-indigo-950/60 text-indigo-400 border-indigo-800/80' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+          }`}>
             <Sliders className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-sm font-bold flex items-center gap-2 text-slate-100">
+            <h1 className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
               Agent Pipeline Parameters & Guardrails Configurator
             </h1>
-            <p className="text-xs text-slate-400">
+            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Configure models, temperature, retrieval cutoffs, evaluator weights, and agent execution policies.
             </p>
           </div>
@@ -137,7 +139,9 @@ export const AgentConfigurationPanel: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             onClick={handleResetDefaults}
-            className="px-3 py-1.5 rounded-none border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 flex items-center gap-1.5 cursor-pointer"
+            className={`px-3 py-1.5 rounded-none border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
+              isDark ? 'border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-300' : 'border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-800'
+            }`}
           >
             <RotateCcw className="w-3.5 h-3.5" /> Reset Defaults
           </button>
@@ -152,8 +156,10 @@ export const AgentConfigurationPanel: React.FC = () => {
       </div>
 
       {statusMsg && (
-        <div className="p-3 rounded-none bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs font-semibold flex items-center gap-2 font-mono">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" /> {statusMsg}
+        <div className={`p-3 rounded-none border text-xs font-semibold flex items-center gap-2 font-mono ${
+          isDark ? 'bg-emerald-950/80 border-emerald-800 text-emerald-300' : 'bg-emerald-50 border-emerald-300 text-emerald-900'
+        }`}>
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" /> {statusMsg}
         </div>
       )}
 
@@ -164,9 +170,9 @@ export const AgentConfigurationPanel: React.FC = () => {
         <div className={`p-4 rounded-none border flex flex-col gap-3 ${
           isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
         }`}>
-          <div className="flex items-center gap-2 border-b pb-2 border-slate-800/80">
-            <Layers className="w-4 h-4 text-indigo-400" />
-            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-200">1. Orchestrator Agent</h2>
+          <div className={`flex items-center gap-2 border-b pb-2 ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
+            <Layers className="w-4 h-4 text-indigo-500" />
+            <h2 className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>1. Orchestrator Agent</h2>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-xs">

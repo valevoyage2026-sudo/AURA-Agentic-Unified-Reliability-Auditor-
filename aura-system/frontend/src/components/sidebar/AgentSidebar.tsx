@@ -89,14 +89,14 @@ export const AgentSidebar: React.FC = () => {
       <div className={`p-3 rounded-none border flex flex-col gap-1.5 ${
         isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
       }`}>
-        <span className="text-[9px] font-bold tracking-wider uppercase text-slate-500">
+        <span className={`text-[9px] font-bold tracking-wider uppercase ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
           AUDITOR ENGINE
         </span>
-        <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+        <div className={`flex items-center justify-between text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
           <span>Determinism Cap</span>
-          <span className="font-mono text-emerald-400 font-bold">100%</span>
+          <span className={`font-mono font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>100%</span>
         </div>
-        <div className="text-[10px] text-slate-500">
+        <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
           Zero-hallucination evidence bound
         </div>
       </div>

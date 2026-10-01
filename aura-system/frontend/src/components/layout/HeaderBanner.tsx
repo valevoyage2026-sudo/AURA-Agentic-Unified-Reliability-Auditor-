@@ -48,7 +48,7 @@ export const HeaderBanner: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <span className="text-sm font-bold tracking-tight text-slate-100 uppercase">AURA</span>
+            <span className={`text-sm font-bold tracking-tight uppercase ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>AURA</span>
             <span className={`text-[10px] px-2 py-0.5 rounded-none font-semibold border ${
               isDark ? 'bg-slate-900 border-slate-700 text-indigo-300' : 'bg-slate-100 border-slate-300 text-slate-700'
             }`}>
@@ -61,8 +61,8 @@ export const HeaderBanner: React.FC = () => {
       {/* Center Status Indicators */}
       <div className="flex items-center gap-4 text-xs">
         <div className="flex items-center gap-2">
-          <span className="text-slate-400 font-medium">System Status:</span>
-          <span className="flex items-center gap-1.5 text-emerald-400 font-semibold font-mono text-[11px]">
+          <span className={`font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>System Status:</span>
+          <span className={`flex items-center gap-1.5 font-semibold font-mono text-[11px] ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
             <CheckCircle2 className="w-3.5 h-3.5" /> {backendStatus}
           </span>
         </div>
@@ -70,8 +70,8 @@ export const HeaderBanner: React.FC = () => {
         <div className={`w-px h-4 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
 
         <div className="flex items-center gap-2">
-          <span className="text-slate-400 font-medium">Active Module:</span>
-          <span className="font-semibold text-slate-200 font-mono text-[11px]">
+          <span className={`font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Active Module:</span>
+          <span className={`font-semibold font-mono text-[11px] ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>
             {activeTab === 'AuditWorkbench' ? 'Document Compliance Workbench' : activeTab}
           </span>
         </div>
@@ -96,13 +96,17 @@ export const HeaderBanner: React.FC = () => {
 
         {/* User Account */}
         <div className="flex items-center gap-2 pl-1">
-          <div className="w-6 h-6 rounded-none bg-indigo-900/60 border border-indigo-700 text-indigo-200 font-semibold text-[11px] flex items-center justify-center">
+          <div className={`w-6 h-6 rounded-none font-semibold text-[11px] flex items-center justify-center border ${
+            isDark ? 'bg-indigo-900/60 border-indigo-700 text-indigo-200' : 'bg-indigo-100 border-indigo-300 text-indigo-800'
+          }`}>
             V
           </div>
-          <span className="text-xs font-medium text-slate-300 hidden md:inline">Vale</span>
+          <span className={`text-xs font-medium hidden md:inline ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Vale</span>
           <button
             onClick={() => auraStore.setViewState('landing')}
-            className="p-1 rounded-none hover:bg-slate-800 text-slate-400 hover:text-slate-200 transition-colors"
+            className={`p-1 rounded-none transition-colors ${
+              isDark ? 'hover:bg-slate-800 text-slate-400 hover:text-slate-200' : 'hover:bg-slate-200 text-slate-500 hover:text-slate-800'
+            }`}
             title="Sign Out"
           >
             <LogOut className="w-3.5 h-3.5" />

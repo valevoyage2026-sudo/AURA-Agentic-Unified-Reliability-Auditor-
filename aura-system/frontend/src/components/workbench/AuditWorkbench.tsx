@@ -176,14 +176,16 @@ export const AuditWorkbench: React.FC = () => {
         isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
       }`}>
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-none bg-indigo-950/60 text-indigo-400 border border-indigo-800/80">
+          <div className={`p-2 rounded-none border ${
+            isDark ? 'bg-indigo-950/60 text-indigo-400 border-indigo-800/80' : 'bg-indigo-50 text-indigo-700 border-indigo-200'
+          }`}>
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-sm font-bold flex items-center gap-2 text-slate-100">
+            <h1 className={`text-sm font-bold flex items-center gap-2 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
               High-Stakes Document Compliance Inspector
             </h1>
-            <p className="text-xs text-slate-400">
+            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Deterministic multi-agent factual auditing, contradiction detection, and certificate lineage.
             </p>
           </div>
@@ -194,27 +196,35 @@ export const AuditWorkbench: React.FC = () => {
           {/* Quick Resource Add Buttons */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-3 py-1.5 rounded-none border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 cursor-pointer"
+            className={`px-3 py-1.5 rounded-none border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
+              isDark
+                ? 'border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200'
+                : 'border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-800'
+            }`}
             title="Upload CSV, PDF, TXT or MD File"
           >
-            <FileUp className="w-3.5 h-3.5 text-indigo-400" /> Upload File (CSV/PDF)
+            <FileUp className="w-3.5 h-3.5 text-indigo-500" /> Upload File (CSV/PDF)
           </button>
 
           <button
             onClick={() => setShowLinkInput(!showLinkInput)}
-            className="px-3 py-1.5 rounded-none border border-slate-700 bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 cursor-pointer"
+            className={`px-3 py-1.5 rounded-none border text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${
+              isDark
+                ? 'border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200'
+                : 'border-slate-300 bg-slate-100 hover:bg-slate-200 text-slate-800'
+            }`}
             title="Add Regulatory Web Link URL"
           >
-            <LinkIcon className="w-3.5 h-3.5 text-indigo-400" /> Add URL Link
+            <LinkIcon className="w-3.5 h-3.5 text-indigo-500" /> Add URL Link
           </button>
 
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-800">
-            <label className="text-xs font-semibold text-slate-400">Domain Profile:</label>
+          <div className={`flex items-center gap-2 pl-2 border-l ${isDark ? 'border-slate-800' : 'border-slate-300'}`}>
+            <label className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>Domain Profile:</label>
             <select
               value={domain}
               onChange={(e: any) => setDomain(e.target.value)}
               className={`text-xs font-semibold px-3 py-1.5 rounded-none border outline-none cursor-pointer ${
-                isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-100 border-slate-300 text-slate-800'
+                isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-slate-50 border-slate-300 text-slate-900'
               }`}
             >
               <option value="financial">Financial (SEC 10-K / Audit)</option>
@@ -229,14 +239,18 @@ export const AuditWorkbench: React.FC = () => {
 
       {/* URL Link Ingestion Popover */}
       {showLinkInput && (
-        <div className="p-3 rounded-none border bg-slate-900 border-indigo-800 flex items-center gap-3">
-          <LinkIcon className="w-4 h-4 text-indigo-400" />
+        <div className={`p-3 rounded-none border flex items-center gap-3 ${
+          isDark ? 'bg-slate-900 border-indigo-800' : 'bg-indigo-50/70 border-indigo-200'
+        }`}>
+          <LinkIcon className="w-4 h-4 text-indigo-500" />
           <input
             type="url"
             placeholder="Paste regulatory web URL (e.g. https://sec.gov/edgar/...)..."
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
-            className="flex-1 bg-slate-950 border border-slate-800 text-xs p-2 text-slate-200 outline-none font-mono"
+            className={`flex-1 border text-xs p-2 outline-none font-mono ${
+              isDark ? 'bg-slate-950 border-slate-800 text-slate-200' : 'bg-white border-slate-300 text-slate-900'
+            }`}
           />
           <button
             onClick={handleIngestLink}
@@ -254,15 +268,17 @@ export const AuditWorkbench: React.FC = () => {
         <div className={`col-span-6 flex flex-col rounded-none border p-4 gap-4 overflow-hidden ${
           isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
         }`}>
-          <div className="flex items-center justify-between border-b pb-2 border-slate-800/80">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-indigo-400" /> Document Content Under Audit
+          <div className={`flex items-center justify-between border-b pb-2 ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
+              isDark ? 'text-slate-400' : 'text-slate-700'
+            }`}>
+              <FileText className="w-4 h-4 text-indigo-500" /> Document Content Under Audit
             </span>
-            <span className="text-[11px] text-slate-500 font-mono">{docContent.length} chars</span>
+            <span className={`text-[11px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>{docContent.length} chars</span>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-slate-400">Document Title</label>
+            <label className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>Document Title</label>
             <input
               type="text"
               value={docTitle}
@@ -274,7 +290,7 @@ export const AuditWorkbench: React.FC = () => {
           </div>
 
           <div className="flex-1 flex flex-col gap-1.5 overflow-hidden">
-            <label className="text-xs font-semibold text-slate-400">Document Text Payload</label>
+            <label className={`text-xs font-semibold ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>Document Text Payload</label>
             <textarea
               value={docContent}
               onChange={(e) => setDocContent(e.target.value)}
@@ -286,8 +302,10 @@ export const AuditWorkbench: React.FC = () => {
           </div>
 
           {ingestStatus && (
-            <div className="text-[11px] p-2.5 rounded-none bg-slate-950 border border-slate-800 text-indigo-300 font-mono flex items-center gap-2">
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> {ingestStatus}
+            <div className={`text-[11px] p-2.5 rounded-none border font-mono flex items-center gap-2 ${
+              isDark ? 'bg-slate-950 border-slate-800 text-indigo-300' : 'bg-indigo-50 border-indigo-200 text-indigo-900'
+            }`}>
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> {ingestStatus}
             </div>
           )}
 
@@ -304,9 +322,13 @@ export const AuditWorkbench: React.FC = () => {
             <button
               onClick={handleIngestDocument}
               disabled={loading || !docContent.trim()}
-              className="py-2 px-4 rounded-none text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className={`py-2 px-4 rounded-none text-xs font-semibold border transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
+                isDark
+                  ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+              }`}
             >
-              <UploadCloud className="w-4 h-4 text-indigo-400" />
+              <UploadCloud className="w-4 h-4 text-indigo-500" />
               Ingest Document Text
             </button>
           </div>
@@ -316,24 +338,30 @@ export const AuditWorkbench: React.FC = () => {
         <div className={`col-span-6 flex flex-col rounded-none border p-4 gap-4 overflow-hidden ${
           isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
         }`}>
-          <div className="flex items-center justify-between border-b pb-2 border-slate-800/80">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-indigo-400" /> Audit Findings & Lineage
+          <div className={`flex items-center justify-between border-b pb-2 ${isDark ? 'border-slate-800/80' : 'border-slate-200'}`}>
+            <span className={`text-xs font-bold uppercase tracking-wider flex items-center gap-2 ${
+              isDark ? 'text-slate-400' : 'text-slate-700'
+            }`}>
+              <ShieldCheck className="w-4 h-4 text-indigo-500" /> Audit Findings & Lineage
             </span>
 
             {auditReport && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleExportCertificate('json')}
-                  className="px-2.5 py-1 rounded-none bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-slate-200 border border-slate-700 flex items-center gap-1.5 cursor-pointer"
+                  className={`px-2.5 py-1 rounded-none text-[11px] font-medium border flex items-center gap-1.5 cursor-pointer ${
+                    isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                  }`}
                 >
-                  <Download className="w-3.5 h-3.5 text-indigo-400" /> Export JSON
+                  <Download className="w-3.5 h-3.5 text-indigo-500" /> Export JSON
                 </button>
                 <button
                   onClick={() => handleExportCertificate('markdown')}
-                  className="px-2.5 py-1 rounded-none bg-slate-800 hover:bg-slate-700 text-[11px] font-medium text-slate-200 border border-slate-700 flex items-center gap-1.5 cursor-pointer"
+                  className={`px-2.5 py-1 rounded-none text-[11px] font-medium border flex items-center gap-1.5 cursor-pointer ${
+                    isDark ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700' : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-300'
+                  }`}
                 >
-                  <Download className="w-3.5 h-3.5 text-emerald-400" /> Export MD
+                  <Download className="w-3.5 h-3.5 text-emerald-500" /> Export MD
                 </button>
               </div>
             )}
@@ -341,10 +369,10 @@ export const AuditWorkbench: React.FC = () => {
 
           {!auditReport ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-500 gap-3">
-              <Lock className="w-10 h-10 text-slate-700 stroke-1" />
+              <Lock className={`w-10 h-10 stroke-1 ${isDark ? 'text-slate-700' : 'text-slate-400'}`} />
               <div>
-                <h3 className="text-xs font-bold text-slate-400">Ready to Audit</h3>
-                <p className="text-xs max-w-sm mt-1 text-slate-500">
+                <h3 className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>Ready to Audit</h3>
+                <p className={`text-xs max-w-sm mt-1 ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
                   Select a domain profile, provide document text or upload files (CSV/PDF), and execute audit to inspect factual verification lineage.
                 </p>
               </div>
@@ -352,20 +380,24 @@ export const AuditWorkbench: React.FC = () => {
           ) : (
             <div className="flex-1 flex flex-col gap-3 overflow-y-auto pr-1">
               {/* Overall Summary Score */}
-              <div className="p-3.5 rounded-none border bg-slate-950 border-slate-800 flex items-center justify-between">
+              <div className={`p-3.5 rounded-none border flex items-center justify-between ${
+                isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200 shadow-sm'
+              }`}>
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  <div className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                     Reliability Score
                   </div>
-                  <div className="text-lg font-bold flex items-center gap-2 mt-0.5 text-slate-100">
+                  <div className={`text-lg font-bold flex items-center gap-2 mt-0.5 ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
                     {(auditReport.overall_score * 100).toFixed(1)}%
-                    <span className="text-[10px] px-2 py-0.5 rounded-none font-mono uppercase bg-slate-800 text-indigo-300 border border-indigo-800/80">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-none font-mono uppercase border ${
+                      isDark ? 'bg-slate-800 text-indigo-300 border-indigo-800/80' : 'bg-indigo-100 text-indigo-900 border-indigo-300'
+                    }`}>
                       {auditReport.bucket}
                     </span>
                   </div>
                 </div>
 
-                <div className="text-right text-[10px] font-mono text-slate-400">
+                <div className={`text-right text-[10px] font-mono ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
                   <div>Trace: {auditReport.trace_id}</div>
                   <div className="truncate max-w-[180px]" title={auditReport.audit_hash}>
                     Hash: {auditReport.audit_hash.substring(0, 16)}...
@@ -375,9 +407,9 @@ export const AuditWorkbench: React.FC = () => {
 
               {/* Claims Breakdown Table / List */}
               <div className="flex flex-col gap-2">
-                <span className="text-xs font-bold text-slate-400 flex items-center justify-between">
+                <span className={`text-xs font-bold flex items-center justify-between ${isDark ? 'text-slate-400' : 'text-slate-700'}`}>
                   <span>Claims Audit Breakdown ({auditReport.claims_breakdown?.length || 0})</span>
-                  <span className="text-[11px] font-mono text-slate-500">
+                  <span className={`text-[11px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
                     {auditReport.reliable_claims_count} Verified • {auditReport.unreliable_claims_count} Flagged
                   </span>
                 </span>
@@ -390,7 +422,7 @@ export const AuditWorkbench: React.FC = () => {
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="font-mono text-[11px] text-indigo-400 font-medium">{item.claim_id}</span>
+                      <span className="font-mono text-[11px] text-indigo-500 font-medium">{item.claim_id}</span>
                       <span className={`px-2 py-0.5 rounded-none text-[10px] font-bold uppercase ${
                         item.verdict === 'supported'
                           ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
@@ -402,14 +434,16 @@ export const AuditWorkbench: React.FC = () => {
                       </span>
                     </div>
 
-                    <p className="text-slate-200 font-medium text-xs leading-normal">"{item.text}"</p>
+                    <p className={`font-medium text-xs leading-normal ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>"{item.text}"</p>
 
-                    <div className="text-[11px] text-slate-400 bg-slate-900/60 p-2 rounded-none border border-slate-800/80">
+                    <div className={`text-[11px] p-2 rounded-none border ${
+                      isDark ? 'text-slate-400 bg-slate-900/60 border-slate-800/80' : 'text-slate-700 bg-white border-slate-200'
+                    }`}>
                       <strong>Audit Rationale:</strong> {item.rationale}
                     </div>
 
                     {item.evidence_refs?.length > 0 && (
-                      <div className="text-[10px] text-slate-500 font-mono">
+                      <div className={`text-[10px] font-mono ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
                         Evidence Source: {item.evidence_refs.join(', ')}
                       </div>
                     )}
@@ -418,8 +452,10 @@ export const AuditWorkbench: React.FC = () => {
               </div>
 
               {exportedCert && (
-                <div className="p-3 rounded-none border border-slate-800 bg-slate-950 text-slate-300 font-mono text-[11px] overflow-x-auto whitespace-pre-wrap">
-                  <div className="font-bold text-indigo-400 mb-1">Signed Certificate Export:</div>
+                <div className={`p-3 rounded-none border font-mono text-[11px] overflow-x-auto whitespace-pre-wrap ${
+                  isDark ? 'border-slate-800 bg-slate-950 text-slate-300' : 'border-slate-300 bg-slate-100 text-slate-900'
+                }`}>
+                  <div className="font-bold text-indigo-500 mb-1">Signed Certificate Export:</div>
                   {exportedCert}
                 </div>
               )}

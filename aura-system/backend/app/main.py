@@ -15,6 +15,7 @@ from app.schemas.schemas import (
 )
 from app.core.compliance_service import compliance_service
 from app.graph.workflow import app_graph
+from app.api.v1.router import api_v1_router
 
 app = FastAPI(
     title="AURA - Enterprise Agentic Reliability & Compliance Auditor",
