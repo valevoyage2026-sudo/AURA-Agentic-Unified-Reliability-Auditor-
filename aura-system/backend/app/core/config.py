@@ -17,18 +17,14 @@ class Settings(BaseSettings):
     QDRANT_PORT: int = 6333
     QDRANT_COLLECTION: str = "aura_evidence"
     
-    # Neo4j Settings
-    NEO4J_URI: str = "bolt://localhost:7687"
-    NEO4J_USER: str = "neo4j"
-    NEO4J_PASSWORD: str = "password"
-    
+
     # Redis Settings
     REDIS_URL: str = "redis://localhost:6379/0"
     
     # Ollama / LLM Settings
     OLLAMA_BASE_URL: str = "http://localhost:11434"
-    OLLAMA_MODEL: str = "qwen3.5:latest"
-    DEFAULT_MODEL: str = "qwen3.5:latest"
+    OLLAMA_MODEL: str = "qwen3.5-9b-64k"
+    DEFAULT_MODEL: str = "qwen3.5-9b-64k"
     
     # Pipeline Scoping
     MAX_ITERATIONS: int = 2

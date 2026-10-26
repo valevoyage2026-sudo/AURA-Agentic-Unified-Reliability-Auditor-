@@ -10,6 +10,7 @@ from app.agents.logic_agent import ContradictionAgent
 from app.agents.evaluator_agent import EvaluatorAgent
 from app.agents.self_repair import SelfRepairAgent
 from app.agents.response_generator import ResponseGenerator
+from app.agents.generator_agent import DraftGeneratorAgent
 from app.agents.skills import (
     check_entailment,
     check_citation_exists,
@@ -27,6 +28,7 @@ __all__ = [
     "EvaluatorAgent",
     "SelfRepairAgent",
     "ResponseGenerator",
+    "DraftGeneratorAgent",
     "check_entailment",
     "check_citation_exists",
     "detect_numeric_date_conflict",

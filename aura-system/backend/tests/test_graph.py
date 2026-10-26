@@ -12,7 +12,20 @@ except ImportError:
 
 from app.graph.planner import decompose_claims
 from app.schemas.schemas import AuraState, Claim, Evidence, VerificationResult, ReliabilityReport
-from app.graph.workflow import plan_node, retrieve_node, verify_node, evaluate_node, app_graph
+from app.graph.workflow import (
+    plan_node,
+    retrieve_node,
+    short_circuit_node,
+    verify_node,
+    evaluate_node,
+    repair_node,
+    response_node,
+    generate_candidate_node,
+    check_evidence_availability,
+    route_after_evaluate,
+    route_after_repair,
+    app_graph,
+)
 
 
 def test_planner_decomposition():
@@ -128,6 +141,26 @@ def test_empty_input_does_not_crash():
     assert claim.type == "factual-compound"
     assert claim.char_span == (0, 0)
     assert claim.depends_on == []
+
+
+def test_planner_numbered_list_bullets():
+    """
+    Test 9: Ordinal bullet points (e.g. 1., 2., 3.) must not be split into dummy standalone claims.
+    """
+    text = "1. Quantum computing uses qubits. 2. Classical computing uses bits."
+    claims = decompose_claims(text)
+
+    assert len(claims) == 2
+    assert claims[0].text == "1. Quantum computing uses qubits."
+    assert claims[1].text == "2. Classical computing uses bits."
+    # Ensure neither claim is just "1." or "2."
+    assert not any(c.text.strip() in ["1.", "2.", "3."] for c in claims)
+
+    # Test verbatim span invariant
+    for c in claims:
+        start, end = c.char_span
+        assert text[start:end] == c.text
+
 
 
 # ==============================================================================
@@ -252,7 +285,7 @@ def test_evaluate_node():
     mock_evaluator = MagicMock()
     mock_evaluator.evaluate.return_value = mock_report
 
-    with patch("app.graph.workflow.EvaluatorAgent", return_value=mock_evaluator):
+    with patch("app.graph.evaluator.EvaluatorAgent", return_value=mock_evaluator):
         res = evaluate_node(state)
 
     assert "reliability" in res
@@ -302,3 +335,250 @@ def test_node_state_purity():
     assert state.evidence == orig_evidence
     assert state.verifications == orig_verifications
     assert state.trace_id == orig_trace_id
+
+
+def test_short_circuit_node():
+    """
+    Task 2 Test 7: Verify short_circuit_node sets insufficient_evidence and unresolved
+    reliability report without calling verification agents.
+    """
+    c1 = Claim(id="c1", text="No evidence claim", type="factual-atomic", char_span=(0, 17))
+    state = AuraState(original_text="No evidence claim", claims=[c1], trace_id="trace-short")
+
+    res = short_circuit_node(state)
+    assert "verifications" in res
+    assert "reliability" in res
+    assert res["verifications"]["c1_fact"].verdict == "insufficient_evidence"
+    assert res["verifications"]["c1_fact"].confidence == 0.0
+    assert res["reliability"].bucket == "unresolved"
+
+
+def test_check_evidence_availability():
+    """
+    Task 2 Test 8: Verify check_evidence_availability distinguishes zero-evidence from hit.
+    """
+    c1 = Claim(id="c1", text="text", type="factual-atomic", char_span=(0, 4))
+    state_empty = AuraState(original_text="text", claims=[c1], evidence={"c1": []}, trace_id="t1")
+    assert check_evidence_availability(state_empty) == "zero_evidence"
+
+    ev = Evidence(source_id="s1", text="t", retrieval_method="vector", confidence=0.8, source_trust_tier=1)
+    state_with_ev = AuraState(original_text="text", claims=[c1], evidence={"c1": [ev]}, trace_id="t2")
+    assert check_evidence_availability(state_with_ev) == "has_evidence"
+
+
+def test_route_after_evaluate_iteration_cap():
+    """
+    Task 2 Test 9: Verify loop safety & iteration cap guardrail.
+    When iteration >= max_iterations, must strictly route to response.
+    """
+    rep_borderline = ReliabilityReport(score=0.5, bucket="borderline", contributing_agents=["fact"])
+
+    state_under_cap = AuraState(
+        original_text="text",
+        iteration=0,
+        max_iterations=2,
+        reliability=rep_borderline,
+        trace_id="t1"
+    )
+    assert route_after_evaluate(state_under_cap) == "to_repair"
+
+    state_at_cap = AuraState(
+        original_text="text",
+        iteration=2,
+        max_iterations=2,
+        reliability=rep_borderline,
+        trace_id="t2"
+    )
+    assert route_after_evaluate(state_at_cap) == "to_response"
+
+    rep_reliable = ReliabilityReport(score=0.95, bucket="reliable", contributing_agents=["fact"])
+    state_reliable = AuraState(
+        original_text="text",
+        iteration=0,
+        max_iterations=2,
+        reliability=rep_reliable,
+        trace_id="t3"
+    )
+    assert route_after_evaluate(state_reliable) == "to_response"
+
+
+def test_repair_and_response_nodes():
+    """
+    Task 2 Test 10: Verify repair_node increments iteration and response_node generates response payload.
+    """
+    c1 = Claim(id="c1", text="The Eiffel Tower was built in 1999.", type="factual-atomic", char_span=(0, 35))
+    v1 = VerificationResult(claim_id="c1", agent="fact", verdict="contradicted", confidence=0.9, rationale="wrong year")
+    state = AuraState(
+        original_text="The Eiffel Tower was built in 1999.",
+        claims=[c1],
+        verifications={"c1_fact": v1},
+        reliability=ReliabilityReport(score=0.1, bucket="unreliable", contributing_agents=["fact"]),
+        iteration=0,
+        max_iterations=2,
+        trace_id="trace-rep"
+    )
+
+    repair_res = repair_node(state)
+    assert repair_res["iteration"] == 1
+    assert "refined_text" in repair_res
+    assert len(repair_res["edits"]) > 0
+
+    state_after_repair = AuraState(
+        original_text=repair_res["original_text"],
+        refined_text=repair_res["refined_text"],
+        claims=[c1],
+        verifications={"c1_fact": v1},
+        reliability=ReliabilityReport(score=0.1, bucket="unreliable", contributing_agents=["fact"]),
+        edits=repair_res["edits"],
+        iteration=1,
+        max_iterations=2,
+        trace_id="trace-rep"
+    )
+
+    resp_res = response_node(state_after_repair)
+    assert "final_response" in resp_res
+    assert resp_res["final_response"]["status"] == "completed"
+    assert "claims_breakdown" in resp_res["final_response"]
+
+
+def test_adversarial_always_borderline_loop_termination():
+    """
+    Task 2 Test 11: End-to-end loop termination on adversarial input.
+    Mocks retriever and evaluator so claim is always borderline.
+    Proves graph terminates within max_iterations without infinite recursion.
+    """
+    mock_ev = Evidence(source_id="s1", text="some ev", retrieval_method="vector", confidence=0.5, source_trust_tier=2)
+    mock_retriever = MagicMock()
+    mock_retriever.retrieve.return_value = {"evidence": [mock_ev]}
+
+    mock_fact = MagicMock()
+    mock_fact.run.return_value = VerificationResult(
+        claim_id="c1", agent="fact", verdict="insufficient_evidence", confidence=0.5, rationale="borderline"
+    )
+
+    mock_eval = MagicMock()
+    mock_eval.evaluate.return_value = ReliabilityReport(
+        score=0.5, bucket="borderline", contributing_agents=["fact"]
+    )
+
+    initial_state = AuraState(
+        original_text="Adversarial claim text that remains borderline.",
+        mode="generate_and_audit",
+        max_iterations=2,
+        trace_id="trace-adversarial"
+    )
+
+    with patch("app.graph.workflow.HybridRetriever", return_value=mock_retriever), \
+         patch("app.graph.workflow.FactVerificationAgent", return_value=mock_fact), \
+         patch("app.graph.workflow.EvaluatorAgent", return_value=mock_eval):
+        final_output = app_graph.invoke(initial_state)
+
+    if isinstance(final_output, dict):
+        final_iteration = final_output.get("iteration", 0)
+        final_res = final_output.get("final_response")
+    else:
+        final_iteration = getattr(final_output, "iteration", 0)
+        final_res = getattr(final_output, "final_response", None)
+
+    # Must terminate within max_iterations
+    assert final_iteration <= 2
+    assert final_res is not None
+
+
+def test_verify_node_pairwise_contradiction():
+    """
+    Task 2 Test 12: Verify that verify_node invokes ContradictionAgent
+    and catches pairwise internal contradictions across claims (AGENTS.md §6).
+    """
+    c1 = Claim(id="c1", text="Company revenue increased by 20% in 2023.", type="factual-atomic", char_span=(0, 42))
+    c2 = Claim(id="c2", text="Company revenue decreased by 20% in 2023.", type="factual-atomic", char_span=(43, 85))
+
+    state = AuraState(
+        original_text="Company revenue increased by 20% in 2023. Company revenue decreased by 20% in 2023.",
+        claims=[c1, c2],
+        evidence={"c1": [], "c2": []},
+        trace_id="trace-contra"
+    )
+
+    res = verify_node(state)
+    assert "verifications" in res
+    verifs = res["verifications"]
+
+    # Pairwise contradiction key: c1_c2_contradiction
+    contra_keys = [k for k in verifs.keys() if "contradiction" in k]
+    assert len(contra_keys) >= 1
+    contra_res = verifs[contra_keys[0]]
+    assert contra_res.verdict == "contradicted"
+    assert contra_res.agent == "contradiction"
+
+
+def test_generate_candidate_node_modes():
+    """
+    Task 2 Test 13: Verify generate_candidate_node behavior across the two modes:
+    - In 'generate_and_audit': synthesizes candidate response for a user query.
+    - In 'audit_only': passes through document text without alteration.
+    """
+    # 1. Test audit_only mode
+    state_audit = AuraState(
+        original_text="Existing report text to audit.",
+        mode="audit_only",
+        trace_id="trace-audit-mode"
+    )
+    res_audit = generate_candidate_node(state_audit)
+    assert res_audit == {}
+
+    # 2. Test generate_and_audit mode
+    state_gen = AuraState(
+        original_text="What was the date of the Moon landing?",
+        mode="generate_and_audit",
+        trace_id="trace-gen-mode"
+    )
+    mock_retriever = MagicMock()
+    mock_retriever.retrieve.return_value = {
+        "evidence": [
+            Evidence(
+                source_id="apollo_doc",
+                text="The Apollo 11 moon landing occurred on July 20, 1969.",
+                retrieval_method="vector",
+                confidence=0.95,
+                source_trust_tier=1
+            )
+        ]
+    }
+    with patch("app.graph.workflow.HybridRetriever", return_value=mock_retriever):
+        res_gen = generate_candidate_node(state_gen)
+
+    assert "query" in res_gen
+    assert res_gen["query"] == "What was the date of the Moon landing?"
+    assert "candidate_text" in res_gen
+    assert len(res_gen["candidate_text"]) > 0
+
+
+def test_mode_audit_only_single_pass():
+    """
+    Task 2 Test 14: In 'audit_only' mode, ensure route_after_repair routes directly
+    to response without an infinite re-check loop.
+    """
+    state_audit = AuraState(
+        original_text="Some document claim.",
+        mode="audit_only",
+        iteration=1,
+        max_iterations=2,
+        edits=[{"claim_id": "c1", "action": "hedged"}],
+        trace_id="t-audit"
+    )
+    # Even if edits were made, audit_only mode does not re-check: routes to response
+    assert route_after_repair(state_audit) == "to_response"
+
+    state_gen = AuraState(
+        original_text="Some query response.",
+        mode="generate_and_audit",
+        iteration=1,
+        max_iterations=2,
+        edits=[{"claim_id": "c1", "action": "rewritten"}],
+        trace_id="t-gen"
+    )
+    # In generate_and_audit mode, it loops back to plan for re-check
+    assert route_after_repair(state_gen) == "to_recheck"
+
+

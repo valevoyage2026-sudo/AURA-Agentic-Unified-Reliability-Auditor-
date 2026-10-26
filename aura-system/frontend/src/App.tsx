@@ -7,11 +7,13 @@ import { LoginPage } from './pages/LoginPage';
 import { AuditWorkbench } from './components/workbench/AuditWorkbench';
 import { MinimalDashboard } from './components/dashboard/MinimalDashboard';
 import { AgentConfigurationPanel } from './components/config/AgentConfigurationPanel';
+import { OfficerPortal } from './components/officer/OfficerPortal';
 
 export default function App() {
   const theme = useAuraStore((s) => s.theme);
   const viewState = useAuraStore((s) => s.viewState);
   const activeTab = useAuraStore((s) => s.activeTab);
+  const currentUser = useAuraStore((s) => s.currentUser);
   const isDark = theme === 'dark';
 
   // Check backend health on mount
@@ -22,32 +24,69 @@ export default function App() {
       .catch(() => auraStore.setBackendStatus('Offline'));
   }, []);
 
+  // Synchronize dark class on document root to prevent media query dark-mode override
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDark]);
+
+  // 1. Landing Page View
   if (viewState === 'landing') return <LandingPage />;
-  if (viewState === 'login') return <LoginPage />;
+
+  // 2. Unauthenticated View: Direct to LoginPage
+  if (viewState === 'login' || !currentUser) return <LoginPage />;
+
+  // 3. Authenticated Workspace Router with Strict Role Containment
+  const isOfficer = currentUser.role === 'officer';
+
+  const renderActiveModule = () => {
+    // Student Role Protection: Students can only access the Advisory & Policy Audit Workbench
+    if (!isOfficer) {
+      return <AuditWorkbench />;
+    }
+
+    // Officer Role Routes
+    switch (activeTab) {
+      case 'OfficerPortal':
+      case 'KnowledgeVault':
+        return <OfficerPortal />;
+      case 'AuditWorkbench':
+        return <AuditWorkbench />;
+      case 'AgentConfig':
+        return <AgentConfigurationPanel />;
+      case 'Overview':
+      default:
+        return <MinimalDashboard />;
+    }
+  };
 
   return (
     <div
-      className={`w-screen h-screen font-sans flex flex-col overflow-hidden transition-colors ${
-        isDark ? 'bg-slate-950 text-slate-100' : 'bg-slate-100 text-slate-900'
-      }`}
+      className={`${isDark ? 'dark' : ''} w-screen h-screen font-sans flex flex-col overflow-hidden transition-colors`}
+      style={{
+        background: 'var(--bg)',
+        color: 'var(--txt)',
+      }}
     >
-      {/* Top Enterprise Header */}
+      {/* Top Enterprise Operations Header */}
       <HeaderBanner />
 
-      {/* Main Command Dashboard */}
+      {/* Main Dual-Pane Operations Shell (per aura.html: 248px 1fr) */}
       <div className="flex-1 flex overflow-hidden">
         {/* Navigation Sidebar */}
         <AgentSidebar />
 
-        {/* Center Main Module */}
-        <main className={`flex-1 flex flex-col overflow-hidden ${isDark ? 'bg-slate-950' : 'bg-slate-100'}`}>
-          {activeTab === 'AuditWorkbench' ? (
-            <AuditWorkbench />
-          ) : activeTab === 'AgentConfig' ? (
-            <AgentConfigurationPanel />
-          ) : (
-            <MinimalDashboard />
-          )}
+        {/* Center Main Workspace */}
+        <main
+          className="flex-1 flex flex-col overflow-hidden"
+          style={{
+            background: 'var(--bg)',
+          }}
+        >
+          {renderActiveModule()}
         </main>
       </div>
     </div>

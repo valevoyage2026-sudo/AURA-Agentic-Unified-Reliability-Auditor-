@@ -1,103 +1,174 @@
 import React from 'react';
 import { useAuraStore, auraStore } from '../../store/useAuraStore';
-import { AgentId } from '../../types/verification';
 import {
   ShieldCheck,
   Sliders,
-  Layers,
-  HelpCircle,
-  Search,
-  Sparkles,
-  CheckCircle2,
-  BarChart3,
+  Activity,
   Database,
-  FileText,
-  PlayCircle,
-  FileCode,
-  List,
+  FileCheck,
 } from 'lucide-react';
 
-const agentIcons: Record<AgentId, React.ReactNode> = {
-  orchestrator: <Layers className="w-4 h-4 text-indigo-400" />,
-  planner: <HelpCircle className="w-4 h-4 text-slate-300" />,
-  searcher: <Search className="w-4 h-4 text-slate-300" />,
-  researcher: <Sparkles className="w-4 h-4 text-slate-300" />,
-  verifier: <CheckCircle2 className="w-4 h-4 text-emerald-400" />,
-  analyst: <BarChart3 className="w-4 h-4 text-slate-300" />,
-  evaluator: <Database className="w-4 h-4 text-slate-300" />,
-  writer: <FileText className="w-4 h-4 text-slate-300" />,
-};
-
 export const AgentSidebar: React.FC = () => {
-  const theme = useAuraStore((s) => s.theme);
   const isLeftSidebarOpen = useAuraStore((s) => s.isLeftSidebarOpen);
-  const agents = useAuraStore((s) => s.agents);
-  const selectedAgentId = useAuraStore((s) => s.selectedAgentId);
   const activeTab = useAuraStore((s) => s.activeTab);
+  const currentUser = useAuraStore((s) => s.currentUser);
 
   if (!isLeftSidebarOpen) return null;
 
-  const isDark = theme === 'dark';
-  const agentList = Object.values(agents);
+  const isOfficer = currentUser?.role === 'officer';
 
-  const navItems = [
-    { id: 'AuditWorkbench', label: 'Audit Workbench', icon: <ShieldCheck className="w-4 h-4 text-indigo-400" /> },
-    { id: 'AgentConfig', label: 'Agent Configurator', icon: <Sliders className="w-4 h-4 text-indigo-400" /> },
-    { id: 'Overview', label: 'Executive Overview', icon: <Layers className="w-4 h-4" /> },
-    { id: 'Executions', label: 'Audit Executions', icon: <PlayCircle className="w-4 h-4" /> },
-    { id: 'Agents', label: 'Agent Pipeline', icon: <BarChart3 className="w-4 h-4" /> },
-    { id: 'Evidence', label: 'Knowledge Base', icon: <FileText className="w-4 h-4" /> },
-    { id: 'Artifacts', label: 'Certificates', icon: <FileCode className="w-4 h-4" /> },
-    { id: 'Logs', label: 'Audit Logs', icon: <List className="w-4 h-4" /> },
-  ] as const;
+  // Role-gated navigation items: Officers get full administrative tools; Students only get advisory auditing
+  const navItems = isOfficer
+    ? [
+        { id: 'AuditWorkbench' as const, label: 'Audit Workbench', icon: 'shield' },
+        { id: 'KnowledgeVault' as const, label: 'Knowledge Vault', icon: 'database' },
+        { id: 'Overview' as const, label: 'Campus Telemetry', icon: 'activity' },
+        { id: 'AgentConfig' as const, label: 'Pipeline Config', icon: 'pipeline' },
+      ]
+    : [
+        { id: 'AuditWorkbench' as const, label: 'Audit Workbench', icon: 'shield' },
+      ];
+
+  const renderNavIcon = (icon: string, isActive: boolean) => {
+    switch (icon) {
+      case 'shield':
+        return <ShieldCheck className="w-[18px] h-[18px]" strokeWidth={1.7} />;
+      case 'database':
+        return <Database className="w-[18px] h-[18px]" strokeWidth={1.7} />;
+      case 'activity':
+        return <Activity className="w-[18px] h-[18px]" strokeWidth={1.7} />;
+      case 'pipeline':
+        return <Sliders className="w-[18px] h-[18px]" strokeWidth={1.7} />;
+      default:
+        return <FileCheck className="w-[18px] h-[18px]" strokeWidth={1.7} />;
+    }
+  };
 
   return (
     <aside
-      className={`w-60 border-r flex flex-col justify-between overflow-y-auto select-none p-3 gap-4 transition-colors ${
-        isDark ? 'bg-slate-950 border-slate-800 text-slate-100' : 'bg-slate-50 border-slate-200 text-slate-900'
-      }`}
+      className="w-[248px] shrink-0 border-r select-none flex flex-col justify-between relative overflow-hidden"
+      style={{
+        background: 'var(--bg)',
+        borderColor: 'var(--line)',
+        minHeight: '760px',
+      }}
     >
-      {/* Navigation Links */}
-      <div className="flex flex-col gap-1">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1">
-          Auditor Navigation
-        </div>
-        {navItems.map((item) => {
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => auraStore.setActiveTab(item.id)}
-              className={`flex items-center gap-2.5 px-3 py-2 rounded-none text-xs font-semibold transition-all cursor-pointer ${
-                isActive
-                  ? isDark
-                    ? 'bg-indigo-950/60 text-indigo-300 border border-indigo-800/80 border-l-2 border-l-indigo-500 font-bold'
-                    : 'bg-indigo-50 text-indigo-900 border border-indigo-200 border-l-2 border-l-indigo-600 font-bold'
-                  : isDark
-                  ? 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-              }`}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
+      {/* Top Workspace Navigation Links */}
+      <div>
+        <h6
+          className="font-medium text-[11px] tracking-[0.14em] uppercase"
+          style={{
+            color: 'var(--txt)',
+            padding: '22px 30px 14px',
+          }}
+        >
+          {isOfficer ? 'Administrative Workspace' : 'Student Workspace'}
+        </h6>
+
+        <nav className="flex flex-col">
+          {navItems.map((item) => {
+            const isActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => auraStore.setActiveTab(item.id)}
+                className={`flex items-center gap-[14px] text-[14.5px] transition-all cursor-pointer font-medium ${
+                  isActive ? 'on' : ''
+                }`}
+                style={{
+                  padding: isActive ? '13px 36px 13px 23px' : '13px 36px',
+                  color: isActive ? 'var(--or)' : 'var(--ink)',
+                  background: isActive ? 'linear-gradient(90deg, #fbe3cf, #fbeee2)' : 'transparent',
+                  borderLeft: isActive ? '3px solid var(--or)' : '3px solid transparent',
+                  margin: isActive ? '0 12px 0 10px' : '0',
+                  borderRadius: isActive ? '2px' : '0',
+                }}
+              >
+                <span style={{ color: isActive ? 'var(--or)' : 'var(--ink)' }}>
+                  {renderNavIcon(item.icon, isActive)}
+                </span>
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
 
-      {/* Bottom System Status Box */}
-      <div className={`p-3 rounded-none border flex flex-col gap-1.5 ${
-        isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
-      }`}>
-        <span className={`text-[9px] font-bold tracking-wider uppercase ${isDark ? 'text-slate-500' : 'text-slate-500'}`}>
-          AUDITOR ENGINE
-        </span>
-        <div className={`flex items-center justify-between text-xs font-semibold ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-          <span>Determinism Cap</span>
-          <span className={`font-mono font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>100%</span>
+      {/* Mountain Landscape Artwork from assets/aura/mountains.png */}
+      <img
+        src="/assets/aura/mountains.png"
+        alt="Mountain Landscape"
+        className="mount select-none pointer-events-none"
+        style={{
+          position: 'absolute',
+          left: 0,
+          width: '100%',
+          bottom: '176px',
+          display: 'block',
+          maskImage: 'linear-gradient(#0000, #000 22%)',
+          WebkitMaskImage: 'linear-gradient(#0000, #000 22%)',
+        }}
+      />
+
+      {/* Bottom System Health Console Card (per aura.html measurements) */}
+      <div
+        className="health"
+        style={{
+          position: 'absolute',
+          left: '20px',
+          right: '28px',
+          bottom: '70px',
+          background: 'var(--card)',
+          border: '1px solid var(--line)',
+          borderRadius: '10px',
+          padding: '14px 14px 18px',
+          boxShadow: '0 8px 24px rgba(18, 48, 90, 0.08)',
+          fontSize: '12px',
+        }}
+      >
+        <div className="flex items-center justify-between" style={{ color: 'var(--ink)' }}>
+          <span className="flex items-center gap-[9px] font-semibold">
+            <ShieldCheck className="w-4 h-4" strokeWidth={1.7} style={{ color: 'var(--ink)' }} />
+            <span>System Health</span>
+          </span>
+          <span
+            className="pill text-[12px] font-medium"
+            style={{
+              background: '#e3f3e8',
+              color: 'var(--ok)',
+              borderRadius: '4px',
+              padding: '2px 12px',
+            }}
+          >
+            Healthy
+          </span>
         </div>
-        <div className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-600'}`}>
-          Zero-hallucination evidence bound
+
+        <small
+          className="block text-[10.5px]"
+          style={{
+            color: 'var(--mut)',
+            margin: '10px 0 12px',
+            fontFamily: 'ui-monospace, "JetBrains Mono", Menlo, monospace',
+          }}
+        >
+          Agents • Infra • Qdrant • Postgres
+        </small>
+
+        {/* 4px Two-Tone Segmented Progress Bar: Orange then Navy */}
+        <div
+          className="bar"
+          style={{
+            height: '4px',
+            background: '#e4dfd6',
+            borderRadius: '3px',
+            overflow: 'hidden',
+            display: 'flex',
+          }}
+        >
+          <i style={{ width: '60%', background: 'var(--or)', display: 'block', height: '100%' }} />
+          <i style={{ width: '40%', background: 'var(--nav)', display: 'block', height: '100%' }} />
         </div>
       </div>
     </aside>
