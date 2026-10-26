@@ -1,6 +1,6 @@
 """
 Sample Corpus Ingestion Script for AURA Knowledge & Retrieval Layer.
-Populates Qdrant vector database and Neo4j knowledge graph with sample domain evidence.
+Populates Qdrant vector database and structured knowledge graph with sample domain evidence.
 Attaches source_trust_tier and last_verified metadata at ingestion time.
 """
 
@@ -71,27 +71,28 @@ def ingest_qdrant(vector_retriever: VectorRetriever):
         logger.error(f"Failed to upsert points into Qdrant: {e}")
 
 
-def ingest_neo4j(graph_retriever: GraphRetriever):
-    if not graph_retriever.driver:
-        logger.warning("Skipping Neo4j ingestion: driver unavailable")
-        return
-
-    cypher_ingest = """
-    MERGE (a:Entity {name: 'AURA'})
-    MERGE (b:Entity {name: 'LangGraph'})
-    MERGE (c:Entity {name: 'FastAPI'})
-    
-    MERGE (a)-[r1:USES {source_id: 'graph_spec_01', source_trust_tier: 1, confidence: 0.95, last_verified: $now}]->(b)
-    MERGE (a)-[r2:EXPOSES {source_id: 'graph_spec_02', source_trust_tier: 1, confidence: 0.98, last_verified: $now}]->(c)
-    """
-
-    now_str = datetime.now(timezone.utc).isoformat()
+def ingest_graph(graph_retriever: GraphRetriever):
+    """Populates structured graph retriever with sample entity relations."""
     try:
-        with graph_retriever.driver.session() as session:
-            session.run(cypher_ingest, now=now_str)
-        logger.info("Successfully ingested sample entity graph into Neo4j")
+        graph_retriever.add_relation(
+            subject="AURA",
+            relation="USES",
+            obj="LangGraph",
+            confidence=0.95,
+            source_trust_tier=1,
+            source_id="graph_spec_01"
+        )
+        graph_retriever.add_relation(
+            subject="AURA",
+            relation="EXPOSES",
+            obj="FastAPI",
+            confidence=0.98,
+            source_trust_tier=1,
+            source_id="graph_spec_02"
+        )
+        logger.info("Successfully ingested sample entity graph relations")
     except Exception as e:
-        logger.error(f"Failed to ingest entities into Neo4j: {e}")
+        logger.error(f"Failed to ingest entity relations: {e}")
 
 
 def main():
@@ -100,9 +101,10 @@ def main():
     graph_retriever = GraphRetriever()
 
     ingest_qdrant(vec_retriever)
-    ingest_neo4j(graph_retriever)
+    ingest_graph(graph_retriever)
     graph_retriever.close()
     logger.info("Ingestion complete.")
+
 
 
 if __name__ == "__main__":

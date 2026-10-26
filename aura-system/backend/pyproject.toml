@@ -16,7 +16,6 @@ dependencies = [
     "langgraph>=0.0.30",
     "langchain>=0.1.10",
     "qdrant-client>=1.8.0",
-    "neo4j>=5.18.0",
     "psycopg[binary]>=3.1.18",
     "python-dotenv>=1.0.1",
 ]

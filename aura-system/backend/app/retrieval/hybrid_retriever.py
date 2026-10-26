@@ -1,5 +1,5 @@
 """
-Hybrid Retrieval Agent combining Qdrant (semantic) and Neo4j (structured) stores.
+Hybrid Retrieval Agent combining Qdrant (semantic) and structured entity graph stores.
 Enforces AGENTS.md guardrails and failure modes:
 - Returns combined list of Evidence objects with trust weighting applied.
 - If either store is unreachable, returns whatever the other store yields with partial_retrieval: True.
@@ -77,14 +77,15 @@ class HybridRetriever:
                 logger.error(f"Vector retrieval failure: {e}")
                 partial_retrieval = True
 
-        # 2. Graph Relationship Lookup (Optional / Disabled)
-        if entities and self.graph_store and self.graph_store.driver:
+        # 2. Graph Relationship Lookup
+        if entities and self.graph_store:
             try:
                 graph_evidence = self.graph_store.graph_lookup(entities=entities)
                 raw_evidence.extend(graph_evidence)
-                sources_contacted.append("neo4j")
+                sources_contacted.append("graph_store")
             except Exception as e:
                 logger.error(f"Graph retrieval failure: {e}")
+
 
         if not self.vector_store.client:
             partial_retrieval = True

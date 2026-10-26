@@ -19,13 +19,10 @@ services:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
       - QDRANT_COLLECTION=aura_evidence
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USER=${NEO4J_USER:-neo4j}
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD:-password}
       - REDIS_URL=redis://redis:6379/0
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
-      - OLLAMA_MODEL=qwen3.5:latest
-      - DEFAULT_MODEL=qwen3.5:latest
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      - OLLAMA_MODEL=qwen3.5-9b-64k
+      - DEFAULT_MODEL=qwen3.5-9b-64k
       - MAX_ITERATIONS=2
     volumes:
       - ./aura-system/backend:/app
@@ -34,11 +31,7 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
-      neo4j:
-        condition: service_started
       redis:
-        condition: service_started
-      ollama:
         condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -77,21 +70,6 @@ services:
     volumes:
       - qdrant-data:/qdrant/storage
 
-  # ==========================================
-  # Neo4j Knowledge Graph (Retrieval Layer)
-  # ==========================================
-  neo4j:
-    image: neo4j:latest
-    container_name: aura-neo4j
-    restart: unless-stopped
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    environment:
-      NEO4J_AUTH: ${NEO4J_USER:-neo4j}/${NEO4J_PASSWORD:-password}
-    volumes:
-      - neo4j-data:/data
-      - neo4j-logs:/logs
 
   # ==========================================
   # Redis Cache / State Store
@@ -101,7 +79,7 @@ services:
     container_name: aura-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6380}:6379"
     volumes:
       - redis-data:/data
 
@@ -123,18 +101,6 @@ services:
       - pgadmin-data:/var/lib/pgadmin
 
   # ==========================================
-  # Ollama LLM Service
-  # ==========================================
-  ollama:
-    image: ollama/ollama:latest
-    container_name: aura-ollama
-    restart: unless-stopped
-    ports:
-      - "${OLLAMA_PORT:-11434}:11434"
-    volumes:
-      - ollama-data:/root/.ollama
-
-  # ==========================================
   # Web AURA Frontend (React + Vite)
   # ==========================================
   frontend:
@@ -144,7 +110,7 @@ services:
     container_name: aura-frontend
     restart: unless-stopped
     ports:
-      - "3000:3005"
+      - "3006:3005"
     environment:
       - VITE_API_BASE_URL=http://localhost:8000
     volumes:
@@ -156,8 +122,5 @@ services:
 volumes:
   postgres-data:
   qdrant-data:
-  neo4j-data:
-  neo4j-logs:
   redis-data:
   pgadmin-data:
-  ollama-data:

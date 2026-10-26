@@ -166,3 +166,133 @@ def test_agent_pipeline_configuration_endpoints():
     assert updated["orchestrator"]["max_iterations"] == 3
     assert updated["evaluator"]["threshold_reliable"] == 0.80
 
+
+def test_academic_domain_compliance_audit():
+    """Test running university academic policy compliance audit report."""
+    # 1. Ingest university calendar policy
+    ingest_req = DocumentIngestRequest(
+        title="2025-2026 Academic Calendar",
+        domain="academic",
+        content="The official deadline to add or drop a course without a 'W' grade for Fall 2025 is Friday, September 12, 2025. Final exams take place Dec 8-13.",
+        source_trust_tier=1
+    )
+    compliance_service.ingest_document(ingest_req)
+
+    # 2. Audit student advisory response with correct and contradictory claims
+    audit_req = AuditReportRequest(
+        title="Student Registration Advisory",
+        domain="academic",
+        document_text="The official deadline to add or drop a course for Fall 2025 is Friday, September 12, 2025. However final exams are in January 2026."
+    )
+    report = compliance_service.audit_report(audit_req)
+
+    assert report.domain == "academic"
+    assert report.total_claims >= 2
+    assert report.audit_hash is not None
+    assert any(c["verdict"] == "supported" for c in report.claims_breakdown)
+
+
+def test_ground_truth_management_officer_success():
+    """Test that Academic Officer can upload, list, get, delete, and sync ground truth."""
+    headers = {"X-AURA-Role": "officer"}
+    
+    # 1. Officer uploads ground truth policy document
+    payload = {
+        "domain": "academic",
+        "source_trust_tier": 1
+    }
+    files = {
+        "file": ("Fall_2026_Catalog_Addendum.txt", b"Section 9.1: Senior Thesis is 4 credits and requires CS 301.", "text/plain")
+    }
+    r_upload = client.post("/v1/documents/ground_truth/upload", headers=headers, data=payload, files=files)
+    assert r_upload.status_code == 200
+    doc_data = r_upload.json()
+    doc_id = doc_data["doc_id"]
+    assert doc_data["title"] == "Fall_2026_Catalog_Addendum.txt"
+    assert doc_id in INGESTED_DOCUMENTS_STORE
+
+    # 2. Officer lists ground truth documents
+    r_list = client.get("/v1/documents/ground_truth/list", headers=headers)
+    assert r_list.status_code == 200
+    list_data = r_list.json()
+    assert list_data["total"] >= 1
+    assert any(d["doc_id"] == doc_id for d in list_data["documents"])
+
+    # 3. Officer gets single document metadata
+    r_get = client.get(f"/v1/documents/ground_truth/{doc_id}", headers=headers)
+    assert r_get.status_code == 200
+    assert r_get.json()["doc_id"] == doc_id
+
+    # 4. Officer deletes ground truth document
+    r_del = client.delete(f"/v1/documents/ground_truth/{doc_id}", headers=headers)
+    assert r_del.status_code == 200
+    assert doc_id not in INGESTED_DOCUMENTS_STORE
+
+    # 5. Officer syncs ground truth from campus_docs
+    r_sync = client.post("/v1/documents/ground_truth/sync", headers=headers)
+    assert r_sync.status_code == 200
+    assert r_sync.json()["status"] == "SYNCED"
+
+
+def test_ground_truth_management_student_forbidden():
+    """Test that student accounts are strictly forbidden from indexing or deleting ground truth."""
+    headers = {"X-AURA-Role": "user"}
+
+    # 1. Student attempts to upload ground truth
+    files = {
+        "file": ("Hacked_Policy.txt", b"All exams are canceled forever.", "text/plain")
+    }
+    r_upload = client.post("/v1/documents/ground_truth/upload", headers=headers, data={"domain": "academic"}, files=files)
+    assert r_upload.status_code == 403
+    assert "Forbidden" in r_upload.json()["detail"]
+
+    # 2. Student attempts to delete ground truth
+    r_del = client.delete("/v1/documents/ground_truth/doc_academic_calendar", headers=headers)
+    assert r_del.status_code == 403
+    assert "Forbidden" in r_del.json()["detail"]
+
+
+def test_student_verify_upload_no_ground_truth_contamination():
+    """Test that student document uploads are audited against ground truth without contaminating the knowledge store."""
+    headers = {"X-AURA-Role": "user"}
+    
+    # Pre-condition: check current ground truth keys
+    initial_gt_keys = set(INGESTED_DOCUMENTS_STORE.keys())
+
+    # Student uploads a draft petition to verify
+    student_content = b"I want to drop CS 101 on September 12, 2025. Then I will take CS 201."
+    files = {
+        "file": ("Sarah_Petition_Draft.txt", student_content, "text/plain")
+    }
+    r_verify = client.post("/v1/documents/verify_upload", headers=headers, data={"domain": "academic"}, files=files)
+    assert r_verify.status_code == 200
+    report = r_verify.json()
+    assert report["document_title"] == "Verification: Sarah_Petition_Draft.txt"
+    assert report["total_claims"] >= 1
+    assert "trace_id" in report
+
+    # CRITICAL INVARIANT: The student's document is NOT in ground truth store!
+    after_gt_keys = set(INGESTED_DOCUMENTS_STORE.keys())
+    assert after_gt_keys == initial_gt_keys
+    assert not any("Sarah_Petition_Draft" in k for k in after_gt_keys)
+
+
+def test_campus_audit_history_and_metrics():
+    """Test audit reports list and aggregated campus metrics endpoints."""
+    # 1. List audit reports
+    r_reports = client.get("/v1/audit/reports", headers={"X-AURA-Role": "officer"})
+    assert r_reports.status_code == 200
+    data = r_reports.json()
+    assert "reports" in data
+
+    # 2. Officer gets campus metrics
+    r_metrics = client.get("/v1/audit/metrics", headers={"X-AURA-Role": "officer"})
+    assert r_metrics.status_code == 200
+    m = r_metrics.json()
+    assert "total_audits" in m
+    assert "overall_reliability_rate" in m
+    assert "contradictions_intercepted" in m
+    assert m["ground_truth_documents_active"] >= 1
+
+
+

@@ -1,6 +1,6 @@
 """
 Retrieval Latency Benchmark Script for AURA (Dev 2 Day 5 Baseline Measurement).
-Measures average, p50 (median), and p95 execution latency (ms) across Vector (Qdrant), Graph (Neo4j), and Hybrid retrieval.
+Measures average, p50 (median), and p95 execution latency (ms) across Vector (Qdrant), Graph, and Hybrid retrieval.
 """
 
 import time
@@ -18,7 +18,7 @@ SAMPLE_QUERIES = [
     "AURA is an Agentic Unified Reliability Auditor for LLMs",
     "The architecture uses LangGraph state machine and FastAPI",
     "Qdrant vector search handles semantic passage retrieval",
-    "Neo4j knowledge graph stores structured entity relationships",
+    "Structured knowledge graph stores entity relationships",
     "PostgreSQL handles memory and audit log persistence",
 ]
 
@@ -54,7 +54,7 @@ def benchmark_vector_search(vector_store: VectorRetriever, runs: int = 5) -> Dic
 
 
 def benchmark_graph_lookup(graph_store: GraphRetriever, runs: int = 5) -> Dict[str, Any]:
-    logger.info("Benchmarking Graph Lookup (Neo4j)...")
+    logger.info("Benchmarking Graph Lookup...")
     latencies = []
     entities = ["AURA", "LangGraph", "FastAPI"]
     for _ in range(runs):
@@ -103,7 +103,7 @@ def main():
     print(f"{'Retrieval Engine':<25} | {'Mean (ms)':<10} | {'p50 (ms)':<10} | {'p95 (ms)':<10}")
     print("-" * 70)
     print(f"{'Vector Search (FastEmbed)':<25} | {vec_stats['mean']:<10} | {vec_stats['p50']:<10} | {vec_stats['p95']:<10}")
-    print(f"{'Graph Lookup (Neo4j)':<25} | {graph_stats['mean']:<10} | {graph_stats['p50']:<10} | {graph_stats['p95']:<10}")
+    print(f"{'Graph Lookup (Structured)':<25} | {graph_stats['mean']:<10} | {graph_stats['p50']:<10} | {graph_stats['p95']:<10}")
     print(f"{'Hybrid Retrieval (Combined)':<25} | {hybrid_stats['mean']:<10} | {hybrid_stats['p50']:<10} | {hybrid_stats['p95']:<10}")
     print("=" * 70)
 

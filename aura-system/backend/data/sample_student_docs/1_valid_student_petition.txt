@@ -1,0 +1,7 @@
+Academic Petition for Course Add/Drop and Sequence Planning
+Student: Sarah Jenkins (ID: CS-2025-8841)
+Term: Fall 2025
+
+I am currently enrolled in CS 101 for the Fall 2025 semester.
+According to university policy, the official deadline to add or drop a course without a 'W' grade for Fall 2025 is Friday, September 12, 2025.
+I intend to complete the prerequisite requirement of CS 101 before enrolling in CS 201 next semester.

@@ -1,0 +1,104 @@
+{
+  "benchmark_suite": "AURA University & Campus Policy Verification Golden Set",
+  "version": "1.0.0",
+  "domain": "academic",
+  "description": "Representative test cases reflecting real university advisory chatbot queries and common LLM hallucination modes.",
+  "test_cases": [
+    {
+      "id": "univ_001_supported_deadline",
+      "text": "The official deadline to add or drop a course without a 'W' grade for the Fall 2025 semester is Friday, September 12, 2025 at 5:00 PM EST.",
+      "type": "factual-atomic",
+      "expected_verdict": "supported",
+      "expected_bucket": "reliable",
+      "category": "Academic Calendar"
+    },
+    {
+      "id": "univ_002_contradicted_deadline",
+      "text": "The official deadline to add or drop a course without penalty for Fall 2025 is October 15, 2025.",
+      "type": "factual-atomic",
+      "expected_verdict": "contradicted",
+      "expected_bucket": "unreliable",
+      "category": "Academic Calendar Hallucination Trap"
+    },
+    {
+      "id": "univ_003_supported_prereq",
+      "text": "CS 201 Data Structures & Algorithms requires CS 101 with a minimum grade of C and MATH 115.",
+      "type": "factual-atomic",
+      "expected_verdict": "supported",
+      "expected_bucket": "reliable",
+      "category": "Course Prerequisites"
+    },
+    {
+      "id": "univ_004_contradicted_prereq",
+      "text": "CS 301 Systems Programming requires Math 400 and Advanced Linear Algebra.",
+      "type": "factual-atomic",
+      "expected_verdict": "contradicted",
+      "expected_bucket": "unreliable",
+      "category": "Course Prerequisites Hallucination Trap"
+    },
+    {
+      "id": "univ_005_supported_gpa",
+      "text": "Recipients of the Presidential Merit Scholarship must maintain a minimum cumulative GPA of 3.25.",
+      "type": "factual-atomic",
+      "expected_verdict": "supported",
+      "expected_bucket": "reliable",
+      "category": "Financial Aid Regulations"
+    },
+    {
+      "id": "univ_006_contradicted_gpa",
+      "text": "Students can retain the Presidential Merit Scholarship with a cumulative GPA of 2.50.",
+      "type": "factual-atomic",
+      "expected_verdict": "contradicted",
+      "expected_bucket": "unreliable",
+      "category": "Financial Aid Hallucination Trap"
+    },
+    {
+      "id": "univ_007_supported_citation",
+      "text": "According to Student Code of Conduct Section 4.1, plagiarism is defined as the intentional or unintentional use of another's words without attribution.",
+      "type": "citation",
+      "expected_verdict": "supported",
+      "expected_bucket": "reliable",
+      "category": "Academic Integrity Policy"
+    },
+    {
+      "id": "univ_008_invalid_citation",
+      "text": "According to Student Handbook Section 99.7, undergraduate students are exempt from attending final examinations.",
+      "type": "citation",
+      "expected_verdict": "invalid",
+      "expected_bucket": "unreliable",
+      "category": "Fabricated Citation Trap"
+    },
+    {
+      "id": "univ_009_subjective_opinion",
+      "text": "In my opinion, Computer Science 101 is the most enjoyable and easiest introductory course at the university.",
+      "type": "subjective",
+      "expected_verdict": "n/a",
+      "expected_bucket": "reliable",
+      "category": "Subjective Student Review"
+    },
+    {
+      "id": "univ_010_unverifiable_speculation",
+      "text": "Artificial intelligence will replace 100% of all university professors by 2029.",
+      "type": "unverifiable",
+      "expected_verdict": "n/a",
+      "expected_bucket": "reliable",
+      "category": "Unverifiable Speculation"
+    },
+    {
+      "id": "univ_011_internal_contradiction_pair",
+      "text": "CS 301 requires CS 201 as a prerequisite. Students can enroll in CS 301 without completing CS 201.",
+      "type": "factual-compound",
+      "expected_verdict": "contradicted",
+      "expected_bucket": "unreliable",
+      "category": "Internal Inconsistency Trap"
+    },
+    {
+      "id": "univ_012_sap_financial_aid",
+      "text": "Undergraduate students must successfully complete at least 67% of all attempted cumulative credit hours to maintain Satisfactory Academic Progress for federal financial aid.",
+      "type": "factual-atomic",
+      "expected_verdict": "supported",
+      "expected_bucket": "reliable",
+      "category": "Federal Financial Aid SAP Policy"
+    }
+  ]
+}

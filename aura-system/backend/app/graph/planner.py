@@ -11,6 +11,16 @@ from app.schemas.schemas import Claim, ClaimType
 
 
 # Heuristic Regex Patterns for Taxonomy Classification
+ABBREVIATIONS_AND_ORDINALS = re.compile(
+    r'^(?:'
+    r'\d{1,3}'                             # Ordinal numbers: 1, 2, 10, 100
+    r'|[A-Za-z]'                           # Single letters: A, b, C
+    r'|[ivxIVX]{1,4}'                      # Roman numerals: i, ii, iii, iv, v, vi, IX
+    r'|Dr|Mr|Mrs|Ms|Prof|Sr|Jr|vs|eg|ie|fig|no|vol|pp|etc|al|St' # Common abbreviations
+    r')$',
+    re.IGNORECASE
+)
+
 CITATION_PATTERNS = [
     re.compile(r'\baccording to\b', re.IGNORECASE),
     re.compile(r'\bsource\s*:', re.IGNORECASE),
@@ -87,10 +97,24 @@ def classify_claim_type(claim_text: str) -> ClaimType:
     return "factual-atomic"
 
 
+def _get_preceding_word(text: str, pos: int) -> str:
+    """Gets the word immediately preceding position `pos` in `text`."""
+    sub = text[:pos]
+    match = re.search(r'([A-Za-z0-9]+)\s*$', sub)
+    return match.group(1) if match else ""
+
+
+def _is_abbreviation_or_ordinal(prefix_word: str) -> bool:
+    """Checks if the word immediately preceding a delimiter is a bullet ordinal or abbreviation."""
+    cleaned = prefix_word.strip()
+    return bool(ABBREVIATIONS_AND_ORDINALS.match(cleaned))
+
+
 def _extract_raw_spans(text: str) -> List[Tuple[int, int, str]]:
     """
     Extracts candidate sentence/clause spans while strictly preserving verbatim substring offsets.
     Guarantees text[start:end] == span_text for every returned span.
+    Handles ordinal prefixes (1., 2.), bullet points, decimals, and standard abbreviations.
     """
     if not text:
         return []
@@ -98,7 +122,11 @@ def _extract_raw_spans(text: str) -> List[Tuple[int, int, str]]:
     spans: List[Tuple[int, int, str]] = []
 
     # 1. Check for explicit citation prefix splitting, e.g., "According to X, Y"
-    citation_prefix_match = re.match(r'^((?:According to|Per|As reported by|Source:)\s+[^,]+,\s*)(.+)$', text, re.IGNORECASE | re.DOTALL)
+    citation_prefix_match = re.match(
+        r'^((?:According to|Per|As reported by|Source:)\s+[^,]+,\s*)(.+)$',
+        text,
+        re.IGNORECASE | re.DOTALL,
+    )
     if citation_prefix_match:
         p1_text = citation_prefix_match.group(1)
         p2_text = citation_prefix_match.group(2)
@@ -106,28 +134,46 @@ def _extract_raw_spans(text: str) -> List[Tuple[int, int, str]]:
         spans.append((len(p1_text), len(text), p2_text))
         return spans
 
-    # 2. Standard sentence extraction with boundary lookahead
-    # Matches sentences ending in . ! ? followed by space+Capital letter or end of string
-    sentence_pattern = re.compile(r'\S.*?(?:[.!?]+(?=\s+[A-Z\d]|$)|$)', re.DOTALL)
+    # 2. Sentence boundary extraction ignoring abbreviations and ordinal prefixes
+    curr_start = 0
+    n = len(text)
+    boundary_pattern = re.compile(r'[.!?]+(?=\s+|\n|$)', re.DOTALL)
 
-    for match in sentence_pattern.finditer(text):
-        start, end = match.span()
-        raw = match.group(0)
-        
-        # Adjust for leading/trailing whitespace if match contained leading/trailing spaces
-        l_stripped = raw.lstrip()
-        if not l_stripped:
+    for match in boundary_pattern.finditer(text):
+        punc_start, punc_end = match.span()
+        preceding_word = _get_preceding_word(text, punc_start)
+
+        # Skip splitting if punctuation follows an ordinal prefix (1., 2.) or abbreviation
+        if punc_end < n and _is_abbreviation_or_ordinal(preceding_word):
             continue
-            
-        leading_offset = len(raw) - len(l_stripped)
-        real_start = start + leading_offset
-        
-        r_stripped = l_stripped.rstrip()
-        real_end = real_start + len(r_stripped)
-        
-        span_str = text[real_start:real_end]
-        if span_str:
-            spans.append((real_start, real_end, span_str))
+
+        raw_span = text[curr_start:punc_end]
+        l_stripped = raw_span.lstrip()
+        if l_stripped:
+            leading_offset = len(raw_span) - len(l_stripped)
+            real_start = curr_start + leading_offset
+            r_stripped = l_stripped.rstrip()
+            real_end = real_start + len(r_stripped)
+
+            span_str = text[real_start:real_end]
+            if span_str:
+                spans.append((real_start, real_end, span_str))
+
+        curr_start = punc_end
+
+    # Capture remaining tail if text doesn't end with sentence punctuation
+    if curr_start < n:
+        raw_span = text[curr_start:n]
+        l_stripped = raw_span.lstrip()
+        if l_stripped:
+            leading_offset = len(raw_span) - len(l_stripped)
+            real_start = curr_start + leading_offset
+            r_stripped = l_stripped.rstrip()
+            real_end = real_start + len(r_stripped)
+
+            span_str = text[real_start:real_end]
+            if span_str:
+                spans.append((real_start, real_end, span_str))
 
     return spans
 
@@ -136,10 +182,11 @@ def decompose_claims(text: str) -> List[Claim]:
     """
     Primary entry point for Planner claim decomposition.
     Splits input text into atomic/compound typed Claim objects with exact character spans.
-    
+
     Guarantees:
     - Every claim.text == text[start:end]
     - Empty/whitespace/malformed input falls back safely to 1 factual-compound claim covering full text
+    - Bullet ordinal prefixes (1., 2.) and non-alphabetic fragments are not parsed as standalone claims
     - Claim IDs are deterministic
     """
     # Fallback for empty or whitespace-only input
@@ -158,25 +205,15 @@ def decompose_claims(text: str) -> List[Claim]:
 
     try:
         raw_spans = _extract_raw_spans(text)
-        
-        # Fallback if parsing returned no valid spans
-        if not raw_spans:
-            full_span = (0, len(text))
-            claim_id = _generate_claim_id(text, 0, len(text))
-            return [
-                Claim(
-                    id=claim_id,
-                    text=text,
-                    type="factual-compound",
-                    char_span=full_span,
-                    depends_on=[]
-                )
-            ]
 
         claims: List[Claim] = []
         for start, end, span_text in raw_spans:
             # Double-check invariant: text[start:end] MUST equal span_text
             assert text[start:end] == span_text, f"Span mismatch: text[{start}:{end}] != '{span_text}'"
+
+            # Filter out non-claim spans lacking sufficient alphabetic content (e.g. "2.", "---", "(a)")
+            if len(re.findall(r'[a-zA-Z]', span_text)) < 2:
+                continue
 
             claim_type = classify_claim_type(span_text)
             claim_id = _generate_claim_id(span_text, start, end)
@@ -190,6 +227,20 @@ def decompose_claims(text: str) -> List[Claim]:
                     depends_on=[]
                 )
             )
+
+        # Fallback if parsing returned no valid claims
+        if not claims:
+            full_span = (0, len(text))
+            claim_id = _generate_claim_id(text, 0, len(text))
+            return [
+                Claim(
+                    id=claim_id,
+                    text=text,
+                    type="factual-compound",
+                    char_span=full_span,
+                    depends_on=[]
+                )
+            ]
 
         return claims
 
@@ -206,3 +257,4 @@ def decompose_claims(text: str) -> List[Claim]:
                 depends_on=[]
             )
         ]
+

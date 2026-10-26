@@ -102,22 +102,25 @@ def verify_text(
             }
         )
 
-        # 4. Apply Self-Repair Agent for span-based refinement
-        repair_agent = SelfRepairAgent()
-        refined_text, edits = repair_agent.apply_edits(
-            original_text=final_state.original_text,
-            claims=final_state.claims,
-            verifications=final_state.verifications,
-            evidence=final_state.evidence
-        )
-
-        # 5. Generate Response with annotations & reliability summary
-        response_gen = ResponseGenerator()
-        response_payload = response_gen.generate_response(
-            state=final_state,
-            refined_text=refined_text,
-            edits=edits
-        )
+        # 4. Extract or apply Self-Repair Agent & ResponseGenerator
+        if final_state.final_response:
+            response_payload = final_state.final_response
+            refined_text = final_state.refined_text or final_state.original_text
+            edits = final_state.edits
+        else:
+            repair_agent = SelfRepairAgent()
+            refined_text, edits = repair_agent.apply_edits(
+                original_text=final_state.original_text,
+                claims=final_state.claims,
+                verifications=final_state.verifications,
+                evidence=final_state.evidence
+            )
+            response_gen = ResponseGenerator()
+            response_payload = response_gen.generate_response(
+                state=final_state,
+                refined_text=refined_text,
+                edits=edits
+            )
 
         # 6. Audit complete
         save_verification_audit(db=db, state=final_state, final_text=refined_text)
@@ -159,6 +162,12 @@ def get_trace_audit(
     """
     Retrieves execution audit logs for a specified trace_id.
     """
+    if trace_id in ("reports", "metrics", "report", "export"):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reserved path."
+        )
+
     audit_data = get_audit_by_trace_id(db=db, trace_id=trace_id)
     if not audit_data.get("events") and not audit_data.get("verification_audit"):
         raise HTTPException(

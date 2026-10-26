@@ -14,8 +14,30 @@ import {
 
 import { playSound, setSoundEnabled } from '../services/soundEffects';
 
+export interface UserProfile {
+  name: string;
+  email: string;
+  role: 'officer' | 'user';
+  department: string;
+}
+
+export const DEMO_OFFICER: UserProfile = {
+  name: 'Dr. Aris Thorne',
+  email: 'registrar@university.edu',
+  role: 'officer',
+  department: 'University Registrar',
+};
+
+export const DEMO_STUDENT: UserProfile = {
+  name: 'Sarah Jenkins',
+  email: 'student@university.edu',
+  role: 'user',
+  department: 'Computer Science',
+};
+
 export interface AuraStoreState {
   theme: ThemeMode;
+  currentUser: UserProfile | null;
   mission: {
     title: string;
     description: string;
@@ -40,7 +62,7 @@ export interface AuraStoreState {
   executionFlow: ExecutionFlowStep[];
   sources: EvidenceSource[];
   keyClaims: KeyClaimItem[];
-  activeTab: 'AuditWorkbench' | 'AgentConfig' | 'Overview' | 'Executions' | 'Agents' | 'Evidence' | 'Artifacts' | 'Logs';
+  activeTab: 'AuditWorkbench' | 'OfficerPortal' | 'AgentConfig' | 'Overview' | 'KnowledgeVault' | 'Executions' | 'Agents' | 'Evidence' | 'Artifacts' | 'Logs';
   adapterMode: 'simulation' | 'real';
   simulationStatus: 'idle' | 'running' | 'paused' | 'completed';
   isLeftSidebarOpen: boolean;
@@ -97,7 +119,7 @@ const initialAgents: Record<AgentId, AgentInfo> = {
     name: 'Searcher',
     role: 'Query knowledge graph',
     status: 'active',
-    currentTask: 'Executing Qdrant vector search and Neo4j graph traversal for entity relationships.',
+    currentTask: 'Executing Qdrant vector search and policy graph traversal for entity relationships.',
     currentOperation: 'Searching vector collection & graph nodes',
     progress: 80,
     progressDetail: '12 vector passages fetched',
@@ -160,11 +182,11 @@ const initialAgents: Record<AgentId, AgentInfo> = {
     name: 'Analyst',
     role: 'Process & extract claims',
     status: 'active',
-    currentTask: 'Detecting internal contradictions between claims and Neo4j graph entity relationships.',
+    currentTask: 'Detecting internal contradictions between claims and structured policy graph relationships.',
     currentOperation: 'Graph path analysis & temporal sanity checks',
     progress: 60,
     progressDetail: 'Analyzing causal chains',
-    input: 'Claims & Neo4j graph edges',
+    input: 'Claims & structured graph edges',
     output: '1 potential numeric discrepancy flagged',
     confidence: 88,
     tokens: 1650,
@@ -306,7 +328,7 @@ const initialExecutionFlow: ExecutionFlowStep[] = [
 ];
 
 let state: AuraStoreState = {
-  theme: 'dark',
+  theme: 'light',
   mission: {
     title: 'Analyze Salary Increase Trends',
     description: 'Cross-check data, verify sources, find insights',
@@ -336,6 +358,7 @@ let state: AuraStoreState = {
   executionFlow: initialExecutionFlow,
   sources: initialSources,
   keyClaims: initialKeyClaims,
+  currentUser: null,
   activeTab: 'AuditWorkbench',
   adapterMode: 'simulation',
   simulationStatus: 'idle',
@@ -362,6 +385,37 @@ export const auraStore = {
   setState: (partial: Partial<AuraStoreState> | ((prev: AuraStoreState) => Partial<AuraStoreState>)) => {
     const next = typeof partial === 'function' ? partial(state) : partial;
     state = { ...state, ...next };
+    notify();
+  },
+  loginAs: (role: 'officer' | 'user') => {
+    playSound('toggle');
+    const profile = role === 'officer' ? DEMO_OFFICER : DEMO_STUDENT;
+    state = {
+      ...state,
+      currentUser: profile,
+      viewState: 'app',
+      activeTab: role === 'officer' ? 'OfficerPortal' : 'AuditWorkbench',
+    };
+    notify();
+  },
+  loginWithProfile: (profile: UserProfile) => {
+    playSound('toggle');
+    state = {
+      ...state,
+      currentUser: profile,
+      viewState: 'app',
+      activeTab: profile.role === 'officer' ? 'OfficerPortal' : 'AuditWorkbench',
+    };
+    notify();
+  },
+  logout: () => {
+    playSound('toggle');
+    state = {
+      ...state,
+      currentUser: null,
+      viewState: 'login',
+      activeTab: 'AuditWorkbench',
+    };
     notify();
   },
   toggleTheme: () => {

@@ -3,7 +3,7 @@ Shared data contracts for AURA pipeline as specified in AGENTS.md and Architectu
 Frozen by Dev 4 for Week 1 foundation.
 """
 
-from typing import Literal, Optional, List, Dict
+from typing import Literal, Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 
 
@@ -54,6 +54,8 @@ class ReliabilityReport(BaseModel):
 class AuraState(BaseModel):
     mode: Literal["generate_and_audit", "audit_only"] = "audit_only"
     original_text: str
+    query: Optional[str] = None
+    candidate_text: Optional[str] = None
     claims: List[Claim] = Field(default_factory=list)
     evidence: Dict[str, List[Evidence]] = Field(default_factory=dict)
     verifications: Dict[str, VerificationResult] = Field(default_factory=dict)
@@ -61,6 +63,9 @@ class AuraState(BaseModel):
     iteration: int = 0
     max_iterations: int = 2
     trace_id: str
+    refined_text: Optional[str] = None
+    edits: List[Dict[str, Any]] = Field(default_factory=list)
+    final_response: Optional[Dict[str, Any]] = None
 
 
 class VerifyRequest(BaseModel):
@@ -75,7 +80,7 @@ class VerifyResponse(BaseModel):
     state: AuraState
 
 
-DomainProfile = Literal["general", "legal", "financial", "healthcare", "regulatory"]
+DomainProfile = Literal["general", "academic", "legal", "financial", "healthcare", "regulatory"]
 
 
 class DocumentIngestRequest(BaseModel):
@@ -100,6 +105,7 @@ class AuditReportRequest(BaseModel):
     document_text: str = Field(description="High-stakes report or document content to audit")
     domain: DomainProfile = Field(default="general")
     title: Optional[str] = Field(default="Untitled High-Stakes Audit Report")
+    mode: Literal["generate_and_audit", "audit_only"] = "audit_only"
 
 
 class ComplianceAuditReport(BaseModel):
@@ -135,6 +141,62 @@ class LinkIngestRequest(BaseModel):
     title: Optional[str] = Field(default=None, description="Optional title for link resource")
     domain: DomainProfile = Field(default="general")
     source_trust_tier: int = Field(default=1, ge=1, le=3)
+
+
+class DocumentListItem(BaseModel):
+    doc_id: str
+    title: str
+    domain: DomainProfile
+    total_chunks: int
+    source_trust_tier: int
+    status: str = "INDEXED"
+    created_at: str
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class DocumentListResponse(BaseModel):
+    total: int
+    documents: List[DocumentListItem]
+
+
+class DeleteDocumentResponse(BaseModel):
+    doc_id: str
+    status: str
+    message: str
+
+
+class SyncCampusDocsResponse(BaseModel):
+    status: str
+    synced_count: int
+    documents: List[str]
+
+
+class AuditReportListItem(BaseModel):
+    trace_id: str
+    document_title: str
+    domain: DomainProfile
+    overall_score: float
+    bucket: str
+    total_claims: int
+    reliable_claims_count: int
+    unreliable_claims_count: int
+    timestamp: str
+    audit_hash: str
+
+
+class AuditReportsListResponse(BaseModel):
+    total: int
+    reports: List[AuditReportListItem]
+
+
+class CampusMetricsResponse(BaseModel):
+    total_audits: int
+    overall_reliability_rate: float
+    total_claims_analyzed: int
+    contradictions_intercepted: int
+    ground_truth_documents_active: int
+    academic_audits_count: int
+
 
 
 # --- Agent Configuration Models ---

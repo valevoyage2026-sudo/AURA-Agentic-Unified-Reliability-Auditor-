@@ -60,7 +60,7 @@ const deterministicSequence: SimulationStep[] = [
       message: 'Researcher requested vector & graph retrieval',
     },
     agentUpdates: {
-      searcher: { status: 'active', progress: 40, operation: 'Querying Qdrant vector collection & Neo4j' },
+      searcher: { status: 'active', progress: 40, operation: 'Querying Qdrant vector collection & knowledge store' },
     },
     pulse: { from: 'researcher', to: 'searcher', color: '#3b82f6' },
     missionProgress: 35,

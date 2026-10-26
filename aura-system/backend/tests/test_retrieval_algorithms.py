@@ -4,6 +4,7 @@ Asserts correctness of semantic search thresholding, graph lookup, trust weighti
 """
 
 import pytest
+from datetime import datetime, timezone
 from unittest.mock import MagicMock
 from app.schemas.schemas import Evidence
 from app.retrieval.vector_store import VectorRetriever
@@ -70,17 +71,18 @@ def test_apply_trust_weighting_multipliers():
     """
     Test that apply_trust_weighting correctly scales confidence by source_trust_tier.
     """
+    now_iso = datetime.now(timezone.utc).isoformat()
     evidence_tier1 = Evidence(
         source_id="s1", text="Tier 1 text", retrieval_method="vector",
-        confidence=0.90, source_trust_tier=1, last_verified="2026-09-13T00:00:00Z"
+        confidence=0.90, source_trust_tier=1, last_verified=now_iso
     )
     evidence_tier2 = Evidence(
         source_id="s2", text="Tier 2 text", retrieval_method="vector",
-        confidence=0.90, source_trust_tier=2, last_verified="2026-09-13T00:00:00Z"
+        confidence=0.90, source_trust_tier=2, last_verified=now_iso
     )
     evidence_tier3 = Evidence(
         source_id="s3", text="Tier 3 text", retrieval_method="vector",
-        confidence=0.90, source_trust_tier=3, last_verified="2026-09-13T00:00:00Z"
+        confidence=0.90, source_trust_tier=3, last_verified=now_iso
     )
 
     weighted = apply_trust_weighting([evidence_tier1, evidence_tier2, evidence_tier3])

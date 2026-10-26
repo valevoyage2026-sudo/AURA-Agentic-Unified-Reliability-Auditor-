@@ -1,0 +1,3 @@
+:root{--bg:#f8f5f0;--card:#fbf9f5;--line:#e6e0d6;--ink:#12305a;--txt:#2b3a52;--mut:#8a93a3;--or:#d9560b;--or2:#f08a2c;--ok:#1f9d55;--nav:#16345f}
+:root[data-theme=dark]{--bg:#10151e;--card:#171e2a;--line:#2a3445;--ink:#e8eef9;--txt:#c3cddd;--mut:#7f8aa0;--nav:#2b4d86}
+.mount{position:absolute;left:0;width:100%;bottom:176px;mask-image:linear-gradient(#0000,#000 22%)}

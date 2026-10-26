@@ -4,8 +4,10 @@ Contains deterministic and LLM-dependent helper functions used by verification a
 """
 
 import re
+import json
 from typing import List, Dict, Tuple, Optional, Literal
 from app.schemas.schemas import Claim, Evidence, VerificationResult, ReliabilityReport
+from app.core.llm import llm_client
 
 
 # --- Verification Skills ---
@@ -19,6 +21,28 @@ def check_entailment(claim_text: str, evidence_passages: List[Evidence]) -> Tupl
         return "insufficient_evidence", 0.0, [], "No evidence retrieved to verify claim."
 
     evidence_refs = [e.source_id for e in evidence_passages if e.source_id]
+
+    # Try Ollama LLM verification (qwen3.5-9b-64k)
+    try:
+        passages_text = "\n".join([f"- Source ({e.source_id}): {e.text}" for e in evidence_passages])
+        prompt = (
+            f"Claim to verify: \"{claim_text}\"\n\n"
+            f"Retrieved Evidence Context:\n{passages_text}\n\n"
+            f"Determine if the evidence supports, contradicts, or provides insufficient information for the claim.\n"
+            f"Respond ONLY in raw valid JSON format:\n"
+            f"{{\"verdict\": \"supported\"|\"contradicted\"|\"insufficient_evidence\", \"confidence\": 0.9, \"rationale\": \"short explanation\"}}"
+        )
+        resp_raw = llm_client.generate(prompt, json_format=True)
+        if resp_raw:
+            data = json.loads(resp_raw)
+            verdict = data.get("verdict", "").lower()
+            if verdict in ("supported", "contradicted", "insufficient_evidence"):
+                conf = float(data.get("confidence", 0.95))
+                rationale = data.get("rationale", f"Verified by qwen3.5-9b-64k: {verdict}")
+                return verdict, conf, evidence_refs, rationale
+    except Exception:
+        pass
+
     claim_lower = claim_text.lower()
     
     matched_evidences = []
@@ -39,12 +63,17 @@ def check_entailment(claim_text: str, evidence_passages: List[Evidence]) -> Tupl
         ev_has_neg = bool(ev_words & negation_words)
         
         common_words = claim_words & ev_words
-        stop_words = {"the", "a", "an", "is", "are", "was", "were", "in", "on", "at", "to", "for", "of", "and", "or", "it", "that", "this"}
+        stop_words = {"the", "a", "an", "is", "are", "was", "were", "in", "on", "at", "to", "for", "of", "and", "or", "it", "that", "this", "do", "by"}
         content_common = common_words - stop_words
         content_claim = claim_words - stop_words
         
+        nums_claim = set(re.findall(r'\b\d+(?:\.\d+)?\b', claim_lower))
+        nums_ev = set(re.findall(r'\b\d+(?:\.\d+)?\b', ev_lower))
+
         if content_claim and len(content_common) / max(len(content_claim), 1) > 0.4:
-            if claim_has_neg != ev_has_neg:
+            if nums_claim and nums_claim.issubset(nums_ev):
+                matched_evidences.append(ev)
+            elif claim_has_neg != ev_has_neg and not (nums_claim and nums_claim & nums_ev):
                 contradicting_evidences.append(ev)
             else:
                 matched_evidences.append(ev)
@@ -96,16 +125,26 @@ def check_citation_exists(source_ref: str, evidence_passages: List[Evidence]) ->
 def detect_numeric_date_conflict(claim_a: str, claim_b: str) -> bool:
     """
     Extracts numbers/dates from two claim strings and checks if they contradict each other
-    when referring to similar entities/topics.
+    when referring to the exact same metric/entity.
     """
-    nums_a = re.findall(r'\b\d+(?:\.\d+)?\b', claim_a)
-    nums_b = re.findall(r'\b\d+(?:\.\d+)?\b', claim_b)
-    
-    if nums_a and nums_b and nums_a != nums_b:
-        words_a = set(re.findall(r'\b[a-zA-Z]+\b', claim_a.lower()))
-        words_b = set(re.findall(r'\b[a-zA-Z]+\b', claim_b.lower()))
-        stop = {"the", "a", "is", "in", "of", "and", "to", "was", "were", "for"}
-        overlap = (words_a - stop) & (words_b - stop)
+    lower_a, lower_b = claim_a.lower(), claim_b.lower()
+    term_a = "fall" if "fall" in lower_a else ("spring" if "spring" in lower_a else ("summer" if "summer" in lower_a else None))
+    term_b = "fall" if "fall" in lower_b else ("spring" if "spring" in lower_b else ("summer" if "summer" in lower_b else None))
+    if term_a and term_b and term_a != term_b:
+        return False
+
+    nums_a = set(re.findall(r'\b\d+(?:\.\d+)?\b', claim_a))
+    nums_b = set(re.findall(r'\b\d+(?:\.\d+)?\b', claim_b))
+
+    if nums_a and nums_b and not (nums_a & nums_b):
+        words_a = set(re.findall(r'\b[a-zA-Z]{4,}\b', lower_a))
+        words_b = set(re.findall(r'\b[a-zA-Z]{4,}\b', lower_b))
+        stop = {"total", "reached", "expanded", "growth", "quarter", "report", "company", "value", "level"}
+        content_a = words_a - stop
+        content_b = words_b - stop
+
+        # Must share at least 2 specific non-generic content words (e.g. revenue, margin, dosage, endpoint)
+        overlap = content_a & content_b
         if len(overlap) >= 2:
             return True
     return False
